@@ -1,5 +1,7 @@
 # Booking Management API Automation — Restful Booker
 
+# frd: https://docs.google.com/document/d/1akz58LQfaUj-D0SMcwCDe581yFAaIrft/edit
+
 **Production-ready API automation framework** for [Restful Booker](https://restful-booker.herokuapp.com) REST API, built with **Playwright Test + TypeScript** following enterprise-grade best practices with clean architecture, comprehensive test coverage, and automated reporting.
 
 <div align="center">
