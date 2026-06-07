@@ -1,18 +1,21 @@
 import type { Booking, PartialUpdateBookingRequest } from '../types/booking.type';
+import { randomString, randomPrice, randomBookingDates, randomAdditionalNeeds } from '../helpers/random.helper';
+
+const { checkin, checkout } = randomBookingDates();
 
 export const createBookingData: Booking = {
-  firstname: 'Jim',
-  lastname: 'Brown',
-  totalprice: 111,
+  firstname: randomString('FirstName'),
+  lastname: randomString('LastName'),
+  totalprice: randomPrice(50, 500),
   depositpaid: true,
   bookingdates: {
-    checkin: '2026-01-01',
-    checkout: '2026-01-05',
+    checkin,
+    checkout,
   },
-  additionalneeds: 'Breakfast',
+  additionalneeds: randomAdditionalNeeds(),
 };
 
 export const partialUpdateBookingData: PartialUpdateBookingRequest = {
-  firstname: 'James',
-  lastname: 'Brown',
+  firstname: randomString('UpdateFirstName'),
+  lastname: randomString('UpdateLastName'),
 };
