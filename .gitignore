@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Playwright reports/results
+test-results/
+playwright-report/
+blob-report/
+
+# Allure reports/results
+allure-results/
+allure-report/
+
+# Build output
+dist/
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Backup files
+.backup-config/
+*.backup.*
+*.bak
