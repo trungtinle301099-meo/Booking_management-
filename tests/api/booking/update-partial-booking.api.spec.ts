@@ -132,6 +132,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
 
     await allureStep('Verify API rejects request with 403 Forbidden', async () => {
       await expectStatus(patchResponse, 403);
+      expect(patchResponse.status()).toBe(403);
     });
 
     await allureStep('Attach unauthorized response body if available', async () => {

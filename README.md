@@ -4,13 +4,13 @@ Professional API automation framework for [Restful Booker](https://restful-booke
 
 This project is designed for testing the Booking Management API, including:
 
-* Auth - Create Token
-* Booking - Get Booking IDs
-* Booking - Get Booking Detail
-* Booking - Create Booking
-* Booking - Update Booking
-* Booking - Partial Update Booking
-* Booking - Delete Booking
+- Auth - Create Token
+- Booking - Get Booking IDs
+- Booking - Get Booking Detail
+- Booking - Create Booking
+- Booking - Update Booking
+- Booking - Partial Update Booking
+- Booking - Delete Booking
 
 ---
 
@@ -36,10 +36,10 @@ This project is designed for testing the Booking Management API, including:
 
 Before running this project, make sure your machine has:
 
-* **Node.js 20+**
-* **npm**
-* **Git**
-* A terminal such as macOS Terminal, VS Code Terminal, Git Bash, or Linux shell
+- **Node.js 20+**
+- **npm**
+- **Git**
+- A terminal such as macOS Terminal, VS Code Terminal, Git Bash, or Linux shell
 
 Verify your setup:
 
@@ -589,9 +589,9 @@ The workflow file is:
 
 It runs on:
 
-* Push to `main` or `master`
-* Pull request to `main` or `master`
-* Manual run via `workflow_dispatch`
+- Push to `main` or `master`
+- Pull request to `main` or `master`
+- Manual run via `workflow_dispatch`
 
 CI steps:
 
