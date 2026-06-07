@@ -1,0 +1,37 @@
+{
+  "name": "restful-booker-api-automation",
+  "version": "1.0.0",
+  "description": "Production-ready API automation framework for Restful Booker using Playwright and TypeScript",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test tests/api",
+    "test:auth": "playwright test tests/api/auth",
+    "test:booking": "playwright test tests/api/booking",
+    "test:report": "playwright show-report",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "check": "npm run type-check && npm run lint && npm run format:check && npm run test:api",
+    "security:audit": "npm audit --audit-level=high"
+  },
+  "dependencies": {
+    "dotenv": "17.4.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.60.0",
+    "@types/node": "25.9.2",
+    "@typescript-eslint/eslint-plugin": "^8.60.1",
+    "@typescript-eslint/parser": "^8.60.1",
+    "eslint": "^10.4.1",
+    "eslint-plugin-playwright": "^2.10.4",
+    "globals": "^17.6.0",
+    "prettier": "3.8.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.60.1",
+    "zod": "4.4.3"
+  }
+}
