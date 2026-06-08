@@ -3,7 +3,11 @@ import { test, expect } from '../../../src/fixtures/api.fixture';
 import { createBookingData } from '../../../src/data/booking.data';
 import { expectStatus } from '../../../src/api/assertions/response.assertion';
 import { generateAuthToken } from '../../../src/helpers/token.helper';
-import { randomString, randomPrice, randomAdditionalNeeds } from '../../../src/helpers/random.helper';
+import {
+  randomString,
+  randomPrice,
+  randomAdditionalNeeds,
+} from '../../../src/helpers/random.helper';
 import type { CreateBookingResponse } from '../../../src/types/booking.type';
 import { logger } from '../../../src/helpers/logger.helper';
 
@@ -58,7 +62,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
       const patchResponse = await bookingService.partialUpdateBooking(
         bookingIdForUpdate!,
         { firstname: newFirstname },
-        authToken!
+        authToken!,
       );
 
       await test.info().attach('patch-firstname-request.json', {
@@ -87,7 +91,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
     });
   });
 
-  test('PATCH_BOOKING_LASTNAME_001 - should update lastname field only', async ({
+  test('PATCH_BOOKING_LASTNAME_002 - should update lastname field only', async ({
     bookingService,
   }) => {
     await feature('Booking API');
@@ -103,7 +107,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
       const patchResponse = await bookingService.partialUpdateBooking(
         bookingIdForUpdate!,
         { lastname: newLastname },
-        authToken!
+        authToken!,
       );
 
       await expectStatus(patchResponse, 200);
@@ -119,7 +123,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
     });
   });
 
-  test('PATCH_BOOKING_TOTALPRICE_001 - should update totalprice field only', async ({
+  test('PATCH_BOOKING_TOTALPRICE_003 - should update totalprice field only', async ({
     bookingService,
   }) => {
     await feature('Booking API');
@@ -135,7 +139,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
       const patchResponse = await bookingService.partialUpdateBooking(
         bookingIdForUpdate!,
         { totalprice: newTotalPrice },
-        authToken!
+        authToken!,
       );
 
       await expectStatus(patchResponse, 200);
@@ -151,7 +155,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
     });
   });
 
-  test('PATCH_BOOKING_DEPOSITPAID_001 - should update depositpaid field only', async ({
+  test('PATCH_BOOKING_DEPOSITPAID_004 - should update depositpaid field only', async ({
     bookingService,
   }) => {
     await feature('Booking API');
@@ -167,7 +171,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
       const patchResponse = await bookingService.partialUpdateBooking(
         bookingIdForUpdate!,
         { depositpaid: newDepositPaid },
-        authToken!
+        authToken!,
       );
 
       await expectStatus(patchResponse, 200);
@@ -183,7 +187,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
     });
   });
 
-  test('PATCH_BOOKING_CHECKIN_001 - should update checkin date field only', async ({
+  test('PATCH_BOOKING_CHECKIN_005 - should update checkin date field only', async ({
     bookingService,
   }) => {
     await feature('Booking API');
@@ -198,13 +202,13 @@ test.describe('[Booking API] Partial Update Booking', () => {
 
       const patchResponse = await bookingService.partialUpdateBooking(
         bookingIdForUpdate!,
-        { 
-          bookingdates: { 
+        {
+          bookingdates: {
             checkin: newCheckinDate,
-            checkout: createBookingData.bookingdates.checkout
-          } 
+            checkout: createBookingData.bookingdates.checkout,
+          },
         },
-        authToken!
+        authToken!,
       );
 
       await expectStatus(patchResponse, 200);
@@ -220,7 +224,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
     });
   });
 
-  test('PATCH_BOOKING_CHECKOUT_001 - should update checkout date field only', async ({
+  test('PATCH_BOOKING_CHECKOUT_006 - should update checkout date field only', async ({
     bookingService,
   }) => {
     await feature('Booking API');
@@ -235,13 +239,13 @@ test.describe('[Booking API] Partial Update Booking', () => {
 
       const patchResponse = await bookingService.partialUpdateBooking(
         bookingIdForUpdate!,
-        { 
-          bookingdates: { 
+        {
+          bookingdates: {
             checkin: createBookingData.bookingdates.checkin,
-            checkout: newCheckoutDate
-          } 
+            checkout: newCheckoutDate,
+          },
         },
-        authToken!
+        authToken!,
       );
 
       await expectStatus(patchResponse, 200);
@@ -257,7 +261,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
     });
   });
 
-  test('PATCH_BOOKING_ADDITIONALNEEDS_001 - should update additionalneeds field only', async ({
+  test('PATCH_BOOKING_ADDITIONALNEEDS_007 - should update additionalneeds field only', async ({
     bookingService,
   }) => {
     await feature('Booking API');
@@ -273,7 +277,7 @@ test.describe('[Booking API] Partial Update Booking', () => {
       const patchResponse = await bookingService.partialUpdateBooking(
         bookingIdForUpdate!,
         { additionalneeds: newAdditionalNeeds },
-        authToken!
+        authToken!,
       );
 
       await expectStatus(patchResponse, 200);

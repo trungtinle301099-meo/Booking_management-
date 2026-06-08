@@ -1,5 +1,5 @@
 import { test, expect } from '../../../src/fixtures/api.fixture';
-import { validAuthData, invalidAuthData } from '../../../src/data/auth.data';
+import { validAuthData } from '../../../src/data/auth.data';
 import { expectStatus } from '../../../src/api/assertions/response.assertion';
 import { createTokenResponseSchema } from '../../../src/schemas/booking.schema';
 import { feature, story, severity, description } from 'allure-js-commons';

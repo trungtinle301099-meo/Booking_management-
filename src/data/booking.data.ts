@@ -1,5 +1,10 @@
 import type { Booking, PartialUpdateBookingRequest } from '../types/booking.type';
-import { randomString, randomPrice, randomBookingDates, randomAdditionalNeeds } from '../helpers/random.helper';
+import {
+  randomString,
+  randomPrice,
+  randomBookingDates,
+  randomAdditionalNeeds,
+} from '../helpers/random.helper';
 
 const { checkin, checkout } = randomBookingDates();
 

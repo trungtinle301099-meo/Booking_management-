@@ -3,7 +3,12 @@ import { test, expect } from '../../../src/fixtures/api.fixture';
 import { expectStatus } from '../../../src/api/assertions/response.assertion';
 import { createBookingData } from '../../../src/data/booking.data';
 import { generateAuthToken } from '../../../src/helpers/token.helper';
-import { randomString, randomPrice, randomBookingDates, randomAdditionalNeeds } from '../../../src/helpers/random.helper';
+import {
+  randomString,
+  randomPrice,
+  randomBookingDates,
+  randomAdditionalNeeds,
+} from '../../../src/helpers/random.helper';
 import type { CreateBookingResponse } from '../../../src/types/booking.type';
 import { logger } from '../../../src/helpers/logger.helper';
 
@@ -59,7 +64,7 @@ test.describe('[Booking API] Update Booking', () => {
     await story('Update Booking');
     await severity('critical');
     await description(
-      'Verify that PUT /booking/:id updates all booking fields successfully with valid auth token.'
+      'Verify that PUT /booking/:id updates all booking fields successfully with valid auth token.',
     );
 
     const { checkin: newCheckin, checkout: newCheckout } = randomBookingDates();
@@ -84,7 +89,7 @@ test.describe('[Booking API] Update Booking', () => {
       const putResponse = await bookingService.updateBooking(
         bookingIdToUpdate!,
         updatedBookingData,
-        authToken!
+        authToken!,
       );
 
       const putBody = await putResponse.json();
@@ -102,7 +107,7 @@ test.describe('[Booking API] Update Booking', () => {
             responseBody: putBody,
           },
           null,
-          2
+          2,
         ),
         contentType: 'application/json',
       });
@@ -120,16 +125,14 @@ test.describe('[Booking API] Update Booking', () => {
       expect(putBody.totalprice).toBe(updatedBookingData.totalprice);
       expect(putBody.depositpaid).toBe(updatedBookingData.depositpaid);
       expect(putBody.bookingdates.checkin).toBe(updatedBookingData.bookingdates.checkin);
-      expect(putBody.bookingdates.checkout).toBe(
-        updatedBookingData.bookingdates.checkout
-      );
+      expect(putBody.bookingdates.checkout).toBe(updatedBookingData.bookingdates.checkout);
       expect(putBody.additionalneeds).toBe(updatedBookingData.additionalneeds);
 
       logger.info('All booking fields verified successfully');
 
       // Step 6: Log test result
       logger.pass(
-        `UPDATE_BOOKING_ID_001 - Booking ${bookingIdToUpdate} updated successfully with all fields`
+        `UPDATE_BOOKING_ID_001 - Booking ${bookingIdToUpdate} updated successfully with all fields`,
       );
     });
   });

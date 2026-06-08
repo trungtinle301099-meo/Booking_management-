@@ -45,7 +45,7 @@ This framework is designed for:
 ✅ **Scalability** - Organized structure supporting hundreds of tests  
 ✅ **Reporting** - Rich Allure reports with detailed test metrics  
 ✅ **CI/CD Integration** - Automated testing and reporting via GitHub Actions  
-✅ **Best Practices** - Following industry standards and patterns  
+✅ **Best Practices** - Following industry standards and patterns
 
 The framework architecture separates concerns clearly:
 
@@ -67,25 +67,25 @@ Allure Reports
 
 ## Tech Stack
 
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| **Runtime** | | |
-| Node.js | 20+ | Runtime environment |
-| npm | Latest | Package manager |
-| **Testing** | | |
-| Playwright Test | 1.60.0 | API test runner & assertions |
-| TypeScript | 6.0.3 | Type-safe code |
-| **Validation** | | |
-| Zod | 4.4.3 | Runtime schema validation |
-| **Quality & Linting** | | |
-| ESLint | ^10.4.1 | Code linting |
-| TypeScript ESLint | ^8.60.1 | TS-specific linting |
-| Prettier | 3.8.3 | Code formatting |
-| **Reporting** | | |
-| Allure Playwright | 3.9.0 | Rich test reporting |
-| Allure CLI | 2.42.0 | Report generation |
-| **Configuration** | | |
-| dotenv | 17.4.2 | Environment management |
+| Component             | Version | Purpose                      |
+| --------------------- | ------- | ---------------------------- |
+| **Runtime**           |         |                              |
+| Node.js               | 20+     | Runtime environment          |
+| npm                   | Latest  | Package manager              |
+| **Testing**           |         |                              |
+| Playwright Test       | 1.60.0  | API test runner & assertions |
+| TypeScript            | 6.0.3   | Type-safe code               |
+| **Validation**        |         |                              |
+| Zod                   | 4.4.3   | Runtime schema validation    |
+| **Quality & Linting** |         |                              |
+| ESLint                | ^10.4.1 | Code linting                 |
+| TypeScript ESLint     | ^8.60.1 | TS-specific linting          |
+| Prettier              | 3.8.3   | Code formatting              |
+| **Reporting**         |         |                              |
+| Allure Playwright     | 3.9.0   | Rich test reporting          |
+| Allure CLI            | 2.42.0  | Report generation            |
+| **Configuration**     |         |                              |
+| dotenv                | 17.4.2  | Environment management       |
 
 ---
 
@@ -93,12 +93,12 @@ Allure Reports
 
 ### System Requirements
 
-| Requirement | Version | Notes |
-|---|---|---|
-| Node.js | 20+ | Recommended for LTS stability |
-| npm | 10+ | Bundled with Node.js |
-| Git | Latest | For version control |
-| VS Code | Latest | Optional, recommended IDE |
+| Requirement | Version | Notes                         |
+| ----------- | ------- | ----------------------------- |
+| Node.js     | 20+     | Recommended for LTS stability |
+| npm         | 10+     | Bundled with Node.js          |
+| Git         | Latest  | For version control           |
+| VS Code     | Latest  | Optional, recommended IDE     |
 
 ### Verify Installation
 
@@ -317,6 +317,7 @@ export const BOOKING_ENDPOINTS = {
 ```
 
 **Benefits:**
+
 - Centralized route management
 - Easy to update when API changes
 - Prevents hardcoded URLs in tests
@@ -335,6 +336,7 @@ const response = await client.delete(endpoint, { headers });
 ```
 
 **Responsibilities:**
+
 - HTTP request/response handling
 - Authentication token injection
 - Error handling & retries
@@ -358,31 +360,27 @@ export class BookingService {
   }
 
   async updateBooking(id: number, data: Booking, token: string): Promise<Response> {
-    return this.client.put(
-      BOOKING_ENDPOINTS.UPDATE(id),
-      data,
-      { headers: { Cookie: `token=${token}` } }
-    );
+    return this.client.put(BOOKING_ENDPOINTS.UPDATE(id), data, {
+      headers: { Cookie: `token=${token}` },
+    });
   }
 
   async partialUpdateBooking(id: number, data: Partial<Booking>, token: string): Promise<Response> {
-    return this.client.patch(
-      BOOKING_ENDPOINTS.UPDATE(id),
-      data,
-      { headers: { Cookie: `token=${token}` } }
-    );
+    return this.client.patch(BOOKING_ENDPOINTS.UPDATE(id), data, {
+      headers: { Cookie: `token=${token}` },
+    });
   }
 
   async deleteBooking(id: number, token: string): Promise<Response> {
-    return this.client.delete(
-      BOOKING_ENDPOINTS.DELETE(id),
-      { headers: { Cookie: `token=${token}` } }
-    );
+    return this.client.delete(BOOKING_ENDPOINTS.DELETE(id), {
+      headers: { Cookie: `token=${token}` },
+    });
   }
 }
 ```
 
 **Benefits:**
+
 - Encapsulation of API logic
 - Reusable methods across tests
 - Easy to mock for unit testing
@@ -410,6 +408,7 @@ export const test = base.extend<APIFixture>({
 ```
 
 **Usage in tests:**
+
 ```typescript
 test('should create booking', async ({ bookingService, authService }) => {
   const response = await bookingService.createBooking(data);
@@ -418,6 +417,7 @@ test('should create booking', async ({ bookingService, authService }) => {
 ```
 
 **Benefits:**
+
 - Automatic service initialization
 - Consistent test setup/teardown
 - Dependency injection pattern
@@ -444,6 +444,7 @@ export const createBookingData: Booking = {
 ```
 
 **Benefits:**
+
 - Reusable test data
 - Random data prevents test interdependencies
 - Ensures tests pass consistently
@@ -478,6 +479,7 @@ export const createBookingResponseSchema = z.object({
 ```
 
 **Usage in tests:**
+
 ```typescript
 const response = await bookingService.createBooking(data);
 const body = await response.json();
@@ -485,6 +487,7 @@ const validated = createBookingResponseSchema.parse(body); // Throws if invalid
 ```
 
 **Benefits:**
+
 - Runtime response validation
 - Type safety for API responses
 - Early error detection
@@ -515,6 +518,7 @@ test('CREATE_BOOKING_001 - should create booking successfully', async ({
 ```
 
 **Best Practices:**
+
 - One responsibility per test
 - Clear test naming (ACTION_WHAT_EXPECTED)
 - Arrange-Act-Assert pattern
@@ -659,7 +663,7 @@ Allure is an open-source reporting framework providing rich, interactive test re
 ✅ Detailed test steps and attachments  
 ✅ Failure analysis and screenshots  
 ✅ Test metrics and statistics  
-✅ Integration with CI/CD pipelines  
+✅ Integration with CI/CD pipelines
 
 ### Generate Allure Report
 
@@ -706,12 +710,14 @@ allure-report/
 ### Viewing Reports
 
 **Option 1: Local Allure Report**
+
 ```bash
 npm run allure:open
 # Opens: file:///path/to/allure-report/index.html
 ```
 
 **Option 2: GitHub Pages Hosting**
+
 ```
 https://trungtinle301099-meo.github.io/Booking_management-/
 ```
@@ -730,7 +736,7 @@ test('CREATE_BOOKING_001 - create booking', async ({ bookingService }) => {
   await description('Verify that user can create a booking with valid data');
 
   // Test code...
-  
+
   await test.info().attach('request-body.json', {
     body: JSON.stringify(requestData, null, 2),
     contentType: 'application/json',
@@ -756,6 +762,7 @@ test('CREATE_BOOKING_001 - create booking', async ({ bookingService }) => {
 The project includes automated CI/CD via GitHub Actions (`.github/workflows/ci.yml`).
 
 **Workflow Triggers:**
+
 - On `push` to main branch
 - On `pull_request`
 - Manual trigger (`workflow_dispatch`)
@@ -811,6 +818,7 @@ npm run type-check -- --watch
 ```
 
 **Features:**
+
 - Strict null checking
 - NoUnusedLocals disabled (for flexibility)
 - Path aliases for clean imports
@@ -827,6 +835,7 @@ npm run lint -- --fix
 ```
 
 **Rules:**
+
 - TypeScript ESLint rules
 - Playwright best practices
 - Code consistency
@@ -842,6 +851,7 @@ npm run format
 ```
 
 **Prettier Config:**
+
 - 80-char line width
 - 2-space indentation
 - Single quotes
@@ -898,7 +908,9 @@ test.describe('[Booking API] My Feature', () => {
 
   test('MY_TEST_001 - should do something', async ({ bookingService }) => {
     // Arrange
-    const testData = { /* ... */ };
+    const testData = {
+      /* ... */
+    };
 
     // Act
     const response = await bookingService.someMethod(testData);
@@ -962,6 +974,7 @@ test('should do something', async ({ service }) => {
 ### Best Practices
 
 ✅ **DO:**
+
 - One logical assertion per test
 - Clear, descriptive test names
 - Use test fixtures for setup/teardown
@@ -971,6 +984,7 @@ test('should do something', async ({ service }) => {
 - Include before/after hooks for cleanup
 
 ❌ **DON'T:**
+
 - Hardcode values or IDs
 - Depend on test execution order
 - Share state between tests
@@ -982,6 +996,7 @@ test('should do something', async ({ service }) => {
 ### Using Helpers
 
 **Random Data:**
+
 ```typescript
 import { randomString, randomPrice, randomAdditionalNeeds } from '@helpers/random.helper';
 
@@ -991,6 +1006,7 @@ const needs = randomAdditionalNeeds();
 ```
 
 **Token Generation:**
+
 ```typescript
 import { generateAuthToken } from '@helpers/token.helper';
 
@@ -998,6 +1014,7 @@ const token = await generateAuthToken(authService);
 ```
 
 **Logging:**
+
 ```typescript
 import { logger } from '@helpers/logger.helper';
 
@@ -1007,17 +1024,15 @@ logger.pass('Test passed');
 ```
 
 **Retry Logic:**
+
 ```typescript
 import { retryAction } from '@helpers/retry.helper';
 
-const response = await retryAction(
-  () => bookingService.createBooking(data),
-  {
-    retries: 2,
-    delayMs: 500,
-    retryName: 'Create booking',
-  }
-);
+const response = await retryAction(() => bookingService.createBooking(data), {
+  retries: 2,
+  delayMs: 500,
+  retryName: 'Create booking',
+});
 ```
 
 ---
@@ -1029,6 +1044,7 @@ const response = await retryAction(
 #### Issue: `npm ci` fails with "ERESOLVE"
 
 **Solution:**
+
 ```bash
 # Use npm install instead
 npm install
@@ -1040,6 +1056,7 @@ npm ci --legacy-peer-deps
 #### Issue: Tests timeout
 
 **Solution:**
+
 ```bash
 # Increase timeout
 npm run test:api -- --timeout=60000
@@ -1051,6 +1068,7 @@ test.setTimeout(60000);
 #### Issue: Playwright browsers not found
 
 **Solution:**
+
 ```bash
 # Reinstall browsers
 npx playwright install --with-deps
@@ -1062,6 +1080,7 @@ npx playwright install chromium firefox webkit
 #### Issue: API returns 401 Unauthorized
 
 **Solution:**
+
 ```typescript
 // Verify token is being set
 console.log('Token:', token);
@@ -1076,6 +1095,7 @@ const newToken = await generateAuthToken(authService);
 #### Issue: Tests pass locally but fail in CI
 
 **Solution:**
+
 ```bash
 # Test with CI environment variables
 CI=true npm run test:api
@@ -1090,6 +1110,7 @@ npm run test:api -- --workers=1
 #### Issue: Allure report not generating
 
 **Solution:**
+
 ```bash
 # Verify Allure CLI is installed
 npx allure --version
@@ -1117,18 +1138,21 @@ npm run test:api -- -g "TEST_NAME" --reporter=list
 ### Viewing Logs
 
 **Playwright HTML Report:**
+
 ```bash
 npm run test:report
 # Open: playwright-report/index.html
 ```
 
 **Allure Report:**
+
 ```bash
 npm run allure:serve
 # Open: http://localhost:4040
 ```
 
 **Console Output:**
+
 ```bash
 npm run test:api -- --reporter=list
 ```
@@ -1140,28 +1164,33 @@ npm run test:api -- --reporter=list
 ### Development Workflow
 
 1. **Create feature branch:**
+
    ```bash
    git checkout -b feature/my-feature
    ```
 
 2. **Write tests:**
+
    ```bash
    # Add test files
    nano tests/api/my-feature/my-test.api.spec.ts
    ```
 
 3. **Run local checks:**
+
    ```bash
    npm run check
    ```
 
 4. **Commit changes:**
+
    ```bash
    git add .
    git commit -m "feat: add my feature tests"
    ```
 
 5. **Push and create PR:**
+
    ```bash
    git push origin feature/my-feature
    ```
@@ -1180,6 +1209,7 @@ npm run test:api -- --reporter=list
 ### Adding New API Endpoints
 
 1. **Define endpoint** in `src/api/endpoints/`:
+
    ```typescript
    export const NEW_ENDPOINTS = {
      ACTION: '/new/endpoint',
@@ -1187,6 +1217,7 @@ npm run test:api -- --reporter=list
    ```
 
 2. **Add service method** in `src/api/services/`:
+
    ```typescript
    async newMethod(data: Type): Promise<Response> {
      return this.client.post(NEW_ENDPOINTS.ACTION, data);
@@ -1194,8 +1225,11 @@ npm run test:api -- --reporter=list
    ```
 
 3. **Add schema** in `src/schemas/`:
+
    ```typescript
-   export const newResponseSchema = z.object({ /* ... */ });
+   export const newResponseSchema = z.object({
+     /* ... */
+   });
    ```
 
 4. **Write tests** in `tests/api/new-feature/`:
@@ -1239,6 +1273,7 @@ npm run test:api -- --reporter=list
 ## Author
 
 **Trung Tin Le**
+
 - GitHub: [@trungtinle301099-meo](https://github.com/trungtinle301099-meo)
 - Email: trungtinle301099@gmail.com
 

@@ -23,6 +23,8 @@ jobs:
     timeout-minutes: 30
 
     env:
+      CI: true
+      API_FLAKY_DEBUG: 'false'
       BASE_URL: https://restful-booker.herokuapp.com
       BOOKING_USERNAME: admin
       BOOKING_PASSWORD: password123
@@ -82,7 +84,7 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "[Booking Management API Test] ${{ job.status }} - Run #${{ github.run_number }}"
+          subject: '[Booking Management API Test] ${{ job.status }} - Run #${{ github.run_number }}'
           to: trungtinle301099@gmail.com
           from: Booking Management CI <${{ secrets.MAIL_USERNAME }}>
           body: |

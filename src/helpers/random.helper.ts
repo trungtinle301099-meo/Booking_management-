@@ -15,17 +15,17 @@ export function randomDate(daysFromNow = 1, maxDaysRange = 30): string {
 
 export function randomBookingDates(): { checkin: string; checkout: string } {
   const today = new Date();
-  
+
   // Generate random checkin date: 1-30 days from now
   const checkinDays = Math.floor(Math.random() * 30) + 1;
   const checkinDate = new Date(today);
   checkinDate.setDate(checkinDate.getDate() + checkinDays);
-  
+
   // Generate checkout date: checkin date + 1 to 14 days (ensuring checkout > checkin)
   const checkoutDays = Math.floor(Math.random() * 14) + 1;
   const checkoutDate = new Date(checkinDate);
   checkoutDate.setDate(checkoutDate.getDate() + checkoutDays);
-  
+
   return {
     checkin: checkinDate.toISOString().split('T')[0],
     checkout: checkoutDate.toISOString().split('T')[0],

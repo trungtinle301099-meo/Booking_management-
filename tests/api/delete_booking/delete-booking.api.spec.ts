@@ -29,9 +29,7 @@ test.describe('[Booking API] Delete Booking', () => {
     logger.info(`Booking created with ID: ${bookingIdToDelete} for deletion test`);
   });
 
-  test('DELETE_BOOKING_ID_001 - should delete booking successfully', async ({
-    bookingService,
-  }) => {
+  test('DELETE_BOOKING_ID_001 - should delete booking successfully', async ({ bookingService }) => {
     /**
      * Test Summary:
      * Step 1: Setup test metadata
@@ -46,17 +44,14 @@ test.describe('[Booking API] Delete Booking', () => {
     await story('Delete Booking');
     await severity('critical');
     await description(
-      'Verify that DELETE /booking/:id deletes a booking successfully with valid auth token.'
+      'Verify that DELETE /booking/:id deletes a booking successfully with valid auth token.',
     );
 
     await test.step('Delete booking and verify deletion', async () => {
       logger.info(`Deleting booking with ID: ${bookingIdToDelete}`);
 
       // Step 2: Call DELETE /booking/:id API
-      const deleteResponse = await bookingService.deleteBooking(
-        bookingIdToDelete!,
-        authToken!
-      );
+      const deleteResponse = await bookingService.deleteBooking(bookingIdToDelete!, authToken!);
 
       await test.info().attach('delete-booking-response.json', {
         body: JSON.stringify(
@@ -66,7 +61,7 @@ test.describe('[Booking API] Delete Booking', () => {
             deleted: true,
           },
           null,
-          2
+          2,
         ),
         contentType: 'application/json',
       });
@@ -88,21 +83,17 @@ test.describe('[Booking API] Delete Booking', () => {
             message: 'Attempting to fetch deleted booking',
           },
           null,
-          2
+          2,
         ),
         contentType: 'application/json',
       });
 
       expect(getResponse.status()).toBe(404);
 
-      logger.info(
-        `Verified: Booking ${bookingIdToDelete} is no longer accessible (404 Not Found)`
-      );
+      logger.info(`Verified: Booking ${bookingIdToDelete} is no longer accessible (404 Not Found)`);
 
       // Step 5: Log test result
-      logger.pass(
-        `DELETE_BOOKING_ID_001 - Booking ${bookingIdToDelete} deleted successfully`
-      );
+      logger.pass(`DELETE_BOOKING_ID_001 - Booking ${bookingIdToDelete} deleted successfully`);
     });
   });
 });

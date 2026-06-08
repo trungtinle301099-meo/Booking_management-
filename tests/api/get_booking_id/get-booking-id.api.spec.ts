@@ -4,7 +4,6 @@ import { expectStatus } from '../../../src/api/assertions/response.assertion';
 import { logger } from '../../../src/helpers/logger.helper';
 import type { BookingIdResponse } from '../../../src/types/booking.type';
 
-
 test.describe('[Booking API] Get Booking IDs', () => {
   test('GET_BOOKING_ID_001 - should display all booking ids successfully', async ({
     bookingService,
@@ -24,7 +23,7 @@ test.describe('[Booking API] Get Booking IDs', () => {
     await story('Get Booking IDs');
     await severity('critical');
     await description(
-      'Verify that GET /booking returns status 200 and response contains bookingid list.'
+      'Verify that GET /booking returns status 200 and response contains bookingid list.',
     );
 
     await test.step('Call GET /booking through booking service', async () => {
@@ -41,7 +40,7 @@ test.describe('[Booking API] Get Booking IDs', () => {
             responseBody: body,
           },
           null,
-          2
+          2,
         ),
         contentType: 'application/json',
       });
