@@ -57,123 +57,527 @@ jobs:
         if: always()
         run: |
           python3 <<'PY'
+          import html
           import os
+          import re
           import xml.etree.ElementTree as ET
+          from datetime import datetime, timedelta, timezone
           from pathlib import Path
 
           junit_path = Path("test-results/junit-results.xml")
-          output_path = Path("test-results/email-summary.txt")
+          output_path = Path("test-results/email-summary.html")
           output_path.parent.mkdir(parents=True, exist_ok=True)
 
           run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          repository = "${{ github.repository }}"
+          branch = "${{ github.ref_name }}"
+          workflow = "${{ github.workflow }}"
+          run_number = "${{ github.run_number }}"
           test_outcome = "${{ steps.run-api-tests.outcome }}"
           status_text = "SUCCESS" if test_outcome == "success" else "FAILURE"
+          status_color = "#15803d" if status_text == "SUCCESS" else "#b91c1c"
+          execution_time = (
+              datetime.now(timezone.utc) + timedelta(hours=7)
+          ).strftime("%Y-%m-%d %H:%M:%S Asia/Ho_Chi_Minh")
+
+          def esc(value):
+              return html.escape(str(value)) if value is not None else ""
+
+          def percent(count, total):
+              if total == 0:
+                  return "0%"
+              return f"{(count / total) * 100:.2f}%"
+
+          def format_duration(seconds):
+              try:
+                  seconds = float(seconds)
+              except (TypeError, ValueError):
+                  seconds = 0
+
+              if seconds >= 1:
+                  return f"{seconds:.2f}s"
+
+              return f"{seconds * 1000:.0f}ms"
+
+          def detect_module(classname, test_name):
+              text = f"{classname} {test_name}".lower()
+
+              if "auth" in text or "login" in text or "token" in text:
+                  return "Auth API"
+
+              if "booking" in text:
+                  return "Booking API"
+
+              return "API"
+
+          def first_failure_line(message):
+              if not message:
+                  return "N/A"
+
+              cleaned_lines = [
+                  line.strip()
+                  for line in message.strip().splitlines()
+                  if line.strip()
+              ]
+
+              if not cleaned_lines:
+                  return "N/A"
+
+              joined = " ".join(cleaned_lines[:4])
+
+              expected = re.search(r"Expected:\s*([^\s]+)", joined)
+              received = re.search(r"Received:\s*([^\s]+)", joined)
+
+              if expected and received:
+                  return f"Expected: {expected.group(1)} / Received: {received.group(1)}"
+
+              return cleaned_lines[0][:250]
+
+          def extract_expected_result(message):
+              if not message:
+                  return "N/A"
+
+              expected = re.search(r"Expected:\s*([^\n\r]+)", message)
+
+              if expected:
+                  return expected.group(1).strip()
+
+              return "N/A"
+
+          def extract_actual_result(message):
+              if not message:
+                  return "N/A"
+
+              received = re.search(r"Received:\s*([^\n\r]+)", message)
+
+              if received:
+                  return received.group(1).strip()
+
+              return "N/A"
+
+          def detect_error_type(message):
+              text = (message or "").lower()
+
+              if "expected" in text and "received" in text:
+                  return "Assertion Error"
+
+              if "timeout" in text:
+                  return "Timeout Error"
+
+              if "401" in text or "403" in text:
+                  return "Authentication / Authorization Error"
+
+              if "500" in text or "502" in text or "503" in text or "504" in text:
+                  return "Server Error"
+
+              if (
+                  "econnreset" in text
+                  or "etimedout" in text
+                  or "enotfound" in text
+                  or "socket hang up" in text
+              ):
+                  return "Network Error"
+
+              if message:
+                  return "Test Execution Error"
+
+              return "N/A"
+
+          def detect_risk_level(error_type, module_name):
+              error_text = error_type.lower()
+              module_text = module_name.lower()
+
+              if "authentication" in error_text or "authorization" in error_text:
+                  return "High"
+
+              if "server" in error_text:
+                  return "High"
+
+              if "auth" in module_text:
+                  return "High"
+
+              if "assertion" in error_text:
+                  return "Medium"
+
+              if "timeout" in error_text or "network" in error_text:
+                  return "Medium"
+
+              return "Medium"
+
+          def status_badge(status):
+              status = status.upper()
+
+              if status == "PASSED":
+                  color = "#15803d"
+                  bg = "#dcfce7"
+              elif status == "FAILED":
+                  color = "#b91c1c"
+                  bg = "#fee2e2"
+              elif status == "SKIPPED":
+                  color = "#a16207"
+                  bg = "#fef3c7"
+              else:
+                  color = "#374151"
+                  bg = "#f3f4f6"
+
+              return (
+                  f'<span style="display:inline-block;padding:4px 10px;'
+                  f'border-radius:999px;background:{bg};color:{color};'
+                  f'font-size:12px;font-weight:700;">{esc(status)}</span>'
+              )
+
+          def build_table(headers, rows):
+              header_html = "".join(
+                  f"<th>{esc(header)}</th>" for header in headers
+              )
+
+              rows_html = ""
+
+              for row in rows:
+                  cells = "".join(f"<td>{cell}</td>" for cell in row)
+                  rows_html += f"<tr>{cells}</tr>"
+
+              return f"""
+              <table>
+                <thead>
+                  <tr>{header_html}</tr>
+                </thead>
+                <tbody>
+                  {rows_html}
+                </tbody>
+              </table>
+              """
+
+          total = 0
+          passed = 0
+          failed = 0
+          skipped = 0
+          duration_seconds = 0.0
+          test_rows = []
+          failed_analysis_rows = []
 
           if not junit_path.exists():
-              body = "\n".join([
-                  "Booking Management API Test finished.",
-                  "",
-                  f"Status: {status_text}",
-                  "",
-                  "JUnit report was not found.",
-                  "Please open GitHub Actions run to check logs:",
-                  run_url,
-              ])
+              failed = 1
+              status_text = "FAILURE"
+              status_color = "#b91c1c"
           else:
               tree = ET.parse(junit_path)
               root = tree.getroot()
-
               testcases = root.findall(".//testcase")
               total = len(testcases)
-              failed_cases = []
-              skipped_cases = []
 
-              for testcase in testcases:
-                  classname = testcase.attrib.get("classname", "")
-                  name = testcase.attrib.get("name", "")
+              for index, testcase in enumerate(testcases, start=1):
+                  classname = testcase.attrib.get("classname", "N/A")
+                  name = testcase.attrib.get("name", "N/A")
+                  duration = float(testcase.attrib.get("time", 0) or 0)
+                  duration_seconds += duration
+
                   failure = testcase.find("failure")
                   error = testcase.find("error")
-                  skipped = testcase.find("skipped")
+                  skipped_node = testcase.find("skipped")
 
-                  if failure is not None or error is not None:
-                      message = ""
+                  if skipped_node is not None:
+                      status = "SKIPPED"
+                      skipped += 1
+                      failure_message = "N/A"
+                  elif failure is not None or error is not None:
+                      status = "FAILED"
+                      failed += 1
 
-                      if failure is not None:
-                          message = failure.attrib.get("message", "") or (failure.text or "")
-                      elif error is not None:
-                          message = error.attrib.get("message", "") or (error.text or "")
+                      failure_node = failure if failure is not None else error
+                      failure_message = (
+                          failure_node.attrib.get("message", "")
+                          or failure_node.text
+                          or ""
+                      )
+                  else:
+                      status = "PASSED"
+                      passed += 1
+                      failure_message = "N/A"
 
-                      first_line_message = (
-                          message.strip().splitlines()[0]
-                          if message
-                          else "No failure message"
+                  module_name = detect_module(classname, name)
+                  failure_reason = (
+                      first_failure_line(failure_message)
+                      if status == "FAILED"
+                      else "N/A"
+                  )
+
+                  test_rows.append(
+                      [
+                          esc(index),
+                          esc(name),
+                          esc(module_name),
+                          esc(classname),
+                          status_badge(status),
+                          esc(format_duration(duration)),
+                          esc(failure_reason),
+                      ]
+                  )
+
+                  if status == "FAILED":
+                      error_type = detect_error_type(failure_message)
+                      risk_level = detect_risk_level(error_type, module_name)
+
+                      failed_analysis_rows.extend(
+                          [
+                              [esc("Failed Test Case"), esc(name)],
+                              [esc("Test File"), esc(classname)],
+                              [
+                                  esc("Assertion Failed"),
+                                  esc(first_failure_line(failure_message)),
+                              ],
+                              [
+                                  esc("Expected Result"),
+                                  esc(extract_expected_result(failure_message)),
+                              ],
+                              [
+                                  esc("Actual Result"),
+                                  esc(extract_actual_result(failure_message)),
+                              ],
+                              [esc("Error Type"), esc(error_type)],
+                              [esc("Retry Result"), esc("Failed after retry")],
+                              [esc("Risk Level"), esc(risk_level)],
+                              [esc(""), esc("")],
+                          ]
                       )
 
-                      failed_cases.append(
-                          {
-                              "classname": classname,
-                              "name": name,
-                              "message": first_line_message,
-                          }
-                      )
+          if total == 0 and status_text == "SUCCESS":
+              status_text = "INCONCLUSIVE"
+              status_color = "#a16207"
 
-                  if skipped is not None:
-                      skipped_cases.append(
-                          {
-                              "classname": classname,
-                              "name": name,
-                          }
-                      )
+          summary_rows = [
+              ["Total Test Cases", esc(total), esc("100%" if total else "0%")],
+              ["Passed", esc(passed), esc(percent(passed, total))],
+              ["Failed", esc(failed), esc(percent(failed, total))],
+              ["Skipped", esc(skipped), esc(percent(skipped, total))],
+              ["Duration", esc(format_duration(duration_seconds)), esc("N/A")],
+          ]
 
-              failed = len(failed_cases)
-              skipped = len(skipped_cases)
-              passed = total - failed - skipped
+          executive_rows = [
+              ["Project", "Booking_management-"],
+              ["Repository", repository],
+              ["Workflow", workflow],
+              ["Branch", branch],
+              ["Run Number", f"#{run_number}"],
+              ["Execution Time", execution_time],
+              ["Environment", "GitHub Actions - ubuntu-latest"],
+              ["Test Command", "npm run test:api"],
+              ["Final Status", status_badge(status_text)],
+          ]
 
-              lines = []
-              lines.append("Booking Management API Test finished.")
-              lines.append("")
-              lines.append(f"Status: {status_text}")
-              lines.append("Repository: ${{ github.repository }}")
-              lines.append("Branch: ${{ github.ref_name }}")
-              lines.append("Workflow: ${{ github.workflow }}")
-              lines.append("Run number: ${{ github.run_number }}")
-              lines.append("")
-              lines.append("Test Summary:")
-              lines.append(f"- Total: {total}")
-              lines.append(f"- Passed: {passed}")
-              lines.append(f"- Failed: {failed}")
-              lines.append(f"- Skipped: {skipped}")
-              lines.append("")
+          artifact_rows = [
+              [
+                  f"playwright-report-{run_number}",
+                  "Playwright HTML report",
+              ],
+              [
+                  f"test-results-{run_number}",
+                  "Raw test results, JUnit XML, error context",
+              ],
+              [
+                  f"allure-results-{run_number}",
+                  "Allure raw results",
+              ],
+          ]
 
-              if failed_cases:
-                  lines.append("Failed Test Cases:")
-                  for index, case in enumerate(failed_cases, start=1):
-                      lines.append(f"{index}. {case['classname']} > {case['name']}")
-                      lines.append(f"   Reason: {case['message']}")
-                  lines.append("")
-              else:
-                  lines.append("Failed Test Cases: None")
-                  lines.append("")
+          link_rows = [
+              [
+                  "GitHub Actions Run",
+                  f'<a href="{esc(run_url)}">{esc(run_url)}</a>',
+              ],
+              [
+                  "Repository",
+                  f'<a href="https://github.com/{esc(repository)}">https://github.com/{esc(repository)}</a>',
+              ],
+          ]
 
-              lines.append("GitHub Actions run:")
-              lines.append(run_url)
-              lines.append("")
-              lines.append("Please download artifacts from this run:")
-              lines.append("- playwright-report-${{ github.run_number }}")
-              lines.append("- test-results-${{ github.run_number }}")
-              lines.append("- allure-results-${{ github.run_number }}")
-              lines.append("")
-              lines.append("Schedule:")
-              lines.append("- 07:00 Asia/Ho_Chi_Minh")
-              lines.append("- 19:00 Asia/Ho_Chi_Minh")
+          if not failed_analysis_rows:
+              failed_analysis_rows = [
+                  ["Failed Test Case", "N/A"],
+                  ["Test File", "N/A"],
+                  ["Assertion Failed", "N/A"],
+                  ["Expected Result", "N/A"],
+                  ["Actual Result", "N/A"],
+                  ["Error Type", "N/A"],
+                  ["Retry Result", "N/A"],
+                  ["Risk Level", "N/A"],
+              ]
 
-              body = "\n".join(lines)
+          if not test_rows:
+              test_rows = [
+                  [
+                      "1",
+                      "JUnit report was not found",
+                      "N/A",
+                      "N/A",
+                      status_badge("FAILED"),
+                      "N/A",
+                      "Please open GitHub Actions run to check logs.",
+                  ]
+              ]
 
-          output_path.write_text(body)
+          html_body = f"""
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8" />
+            <style>
+              body {{
+                margin: 0;
+                padding: 0;
+                background: #f3f4f6;
+                font-family: Arial, Helvetica, sans-serif;
+                color: #111827;
+              }}
+
+              .container {{
+                max-width: 1180px;
+                margin: 0 auto;
+                padding: 24px;
+              }}
+
+              .header {{
+                background: #111827;
+                color: #ffffff;
+                padding: 24px;
+                border-radius: 12px 12px 0 0;
+              }}
+
+              .header h1 {{
+                margin: 0;
+                font-size: 24px;
+                line-height: 1.4;
+              }}
+
+              .header p {{
+                margin: 8px 0 0;
+                color: #d1d5db;
+                font-size: 14px;
+              }}
+
+              .status-card {{
+                background: #ffffff;
+                border-left: 6px solid {status_color};
+                padding: 18px 24px;
+                margin: 0 0 16px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+              }}
+
+              .status-card strong {{
+                color: {status_color};
+                font-size: 18px;
+              }}
+
+              .section {{
+                background: #ffffff;
+                margin-top: 16px;
+                padding: 22px;
+                border-radius: 10px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+              }}
+
+              h2 {{
+                margin: 0 0 14px;
+                color: #111827;
+                font-size: 18px;
+                border-bottom: 2px solid #e5e7eb;
+                padding-bottom: 8px;
+              }}
+
+              table {{
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13px;
+                table-layout: auto;
+              }}
+
+              th {{
+                background: #1f2937;
+                color: #ffffff;
+                text-align: left;
+                padding: 10px 12px;
+                border: 1px solid #374151;
+                white-space: nowrap;
+              }}
+
+              td {{
+                padding: 10px 12px;
+                border: 1px solid #e5e7eb;
+                vertical-align: top;
+                word-break: break-word;
+              }}
+
+              tr:nth-child(even) td {{
+                background: #f9fafb;
+              }}
+
+              a {{
+                color: #2563eb;
+                text-decoration: none;
+              }}
+
+              .footer {{
+                margin-top: 18px;
+                color: #6b7280;
+                font-size: 12px;
+                text-align: center;
+              }}
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Booking Management API Automation Report</h1>
+                <p>Scheduled API Test report generated by GitHub Actions</p>
+              </div>
+
+              <div class="status-card">
+                Final Status: <strong>{esc(status_text)}</strong>
+              </div>
+
+              <div class="section">
+                <h2>1. Executive Summary</h2>
+                {build_table(["Item", "Value"], executive_rows)}
+              </div>
+
+              <div class="section">
+                <h2>2. Test Execution Summary</h2>
+                {build_table(["Metric", "Count", "Rate"], summary_rows)}
+              </div>
+
+              <div class="section">
+                <h2>3. Test Result Details</h2>
+                {build_table(["#", "Test Case", "Suite / Module", "File", "Status", "Duration", "Failure Reason"], test_rows)}
+              </div>
+
+              <div class="section">
+                <h2>4. Failed Test Analysis</h2>
+                {build_table(["Field", "Detail"], failed_analysis_rows)}
+              </div>
+
+              <div class="section">
+                <h2>5. Report Artifacts</h2>
+                {build_table(["Artifact", "Description"], artifact_rows)}
+              </div>
+
+              <div class="section">
+                <h2>6. Links</h2>
+                {build_table(["Link Type", "URL"], link_rows)}
+              </div>
+
+              <div class="footer">
+                This email was generated automatically by GitHub Actions.
+              </div>
+            </div>
+          </body>
+          </html>
+          """
+
+          output_path.write_text(html_body)
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as github_output:
               github_output.write("email_body<<EMAIL_BODY_EOF\n")
-              github_output.write(body)
+              github_output.write(html_body)
               github_output.write("\nEMAIL_BODY_EOF\n")
               github_output.write(f"status_text={status_text}\n")
           PY
@@ -217,7 +621,7 @@ jobs:
           subject: '[Booking Management API Test] ${{ steps.test-summary.outputs.status_text }} - Run #${{ github.run_number }}'
           to: trungtinle301099@gmail.com
           from: Booking Management CI <${{ secrets.MAIL_USERNAME }}>
-          body: ${{ steps.test-summary.outputs.email_body }}
+          html_body: ${{ steps.test-summary.outputs.email_body }}
 
       - name: Mark workflow as failed when API tests failed
         if: steps.run-api-tests.outcome == 'failure'
