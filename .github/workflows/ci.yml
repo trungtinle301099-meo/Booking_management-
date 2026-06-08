@@ -5,9 +5,20 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
 
 jobs:
   api-test:
+    name: Run API Tests and Generate Reports
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +45,10 @@ jobs:
 
       - name: Run API tests
         run: npm run test:api
+        env:
+          BASE_URL: https://restful-booker.herokuapp.com
+          BOOKING_USERNAME: ${{ secrets.BOOKING_USERNAME }}
+          BOOKING_PASSWORD: ${{ secrets.BOOKING_PASSWORD }}
 
       - name: Generate Allure report
         if: always()
@@ -66,3 +81,25 @@ jobs:
           name: allure-results
           path: allure-results/
           retention-days: 7
+
+      - name: Upload Allure report for GitHub Pages
+        if: always()
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: allure-report/
+
+  deploy-pages:
+    name: Deploy Allure Report to GitHub Pages
+    needs: api-test
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy Allure Report to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+EOF
