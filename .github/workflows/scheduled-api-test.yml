@@ -1,0 +1,109 @@
+name: Scheduled API Test
+
+on:
+  schedule:
+    # 07:00 Asia/Ho_Chi_Minh = 00:00 UTC
+    - cron: '0 0 * * *'
+    # 19:00 Asia/Ho_Chi_Minh = 12:00 UTC
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: scheduled-api-test-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  scheduled-api-test:
+    name: Run Booking Management API Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      BASE_URL: https://restful-booker.herokuapp.com
+      BOOKING_USERNAME: admin
+      BOOKING_PASSWORD: password123
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run API tests
+        run: npm run test:api
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ github.run_number }}
+          path: allure-results/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Send email notification
+        if: always()
+        uses: dawidd6/action-send-mail@v6
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "[Booking Management API Test] ${{ job.status }} - Run #${{ github.run_number }}"
+          to: trungtinle301099@gmail.com
+          from: Booking Management CI <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            Scheduled API test finished.
+
+            Project: Booking_management-
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Workflow: ${{ github.workflow }}
+            Job status: ${{ job.status }}
+            Run number: ${{ github.run_number }}
+
+            GitHub Actions run:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Report:
+            Please open the GitHub Actions run above and download artifact:
+            - playwright-report-${{ github.run_number }}
+            - test-results-${{ github.run_number }}
+            - allure-results-${{ github.run_number }}
+
+            Schedule:
+            - 07:00 Asia/Ho_Chi_Minh
+            - 19:00 Asia/Ho_Chi_Minh
