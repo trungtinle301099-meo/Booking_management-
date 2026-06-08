@@ -6,3 +6,7 @@ allure-results
 allure-report
 .backup-config
 package-lock.json
+
+# Ignore GitHub Actions workflow files
+.github/workflows/ci.yml
+.github/workflows/scheduled-api-test.yml
