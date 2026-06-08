@@ -46,6 +46,8 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run API tests
+        id: run-api-tests
+        continue-on-error: true
         env:
           PLAYWRIGHT_JUNIT_OUTPUT_NAME: test-results/junit-results.xml
         run: npm run test:api -- --reporter=list,junit,html,allure-playwright
@@ -64,12 +66,14 @@ jobs:
           output_path.parent.mkdir(parents=True, exist_ok=True)
 
           run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          test_outcome = "${{ steps.run-api-tests.outcome }}"
+          status_text = "SUCCESS" if test_outcome == "success" else "FAILURE"
 
           if not junit_path.exists():
               body = "\n".join([
                   "Booking Management API Test finished.",
                   "",
-                  "Status: ${{ job.status }}",
+                  f"Status: {status_text}",
                   "",
                   "JUnit report was not found.",
                   "Please open GitHub Actions run to check logs:",
@@ -99,19 +103,27 @@ jobs:
                       elif error is not None:
                           message = error.attrib.get("message", "") or (error.text or "")
 
-                      first_line_message = message.strip().splitlines()[0] if message else "No failure message"
+                      first_line_message = (
+                          message.strip().splitlines()[0]
+                          if message
+                          else "No failure message"
+                      )
 
-                      failed_cases.append({
-                          "classname": classname,
-                          "name": name,
-                          "message": first_line_message,
-                      })
+                      failed_cases.append(
+                          {
+                              "classname": classname,
+                              "name": name,
+                              "message": first_line_message,
+                          }
+                      )
 
                   if skipped is not None:
-                      skipped_cases.append({
-                          "classname": classname,
-                          "name": name,
-                      })
+                      skipped_cases.append(
+                          {
+                              "classname": classname,
+                              "name": name,
+                          }
+                      )
 
               failed = len(failed_cases)
               skipped = len(skipped_cases)
@@ -120,7 +132,7 @@ jobs:
               lines = []
               lines.append("Booking Management API Test finished.")
               lines.append("")
-              lines.append("Status: ${{ job.status }}")
+              lines.append(f"Status: {status_text}")
               lines.append("Repository: ${{ github.repository }}")
               lines.append("Branch: ${{ github.ref_name }}")
               lines.append("Workflow: ${{ github.workflow }}")
@@ -163,6 +175,7 @@ jobs:
               github_output.write("email_body<<EMAIL_BODY_EOF\n")
               github_output.write(body)
               github_output.write("\nEMAIL_BODY_EOF\n")
+              github_output.write(f"status_text={status_text}\n")
           PY
 
       - name: Upload Playwright report
@@ -201,7 +214,13 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: '[Booking Management API Test] ${{ job.status }} - Run #${{ github.run_number }}'
+          subject: '[Booking Management API Test] ${{ steps.test-summary.outputs.status_text }} - Run #${{ github.run_number }}'
           to: trungtinle301099@gmail.com
           from: Booking Management CI <${{ secrets.MAIL_USERNAME }}>
           body: ${{ steps.test-summary.outputs.email_body }}
+
+      - name: Mark workflow as failed when API tests failed
+        if: steps.run-api-tests.outcome == 'failure'
+        run: |
+          echo "API tests failed. Report and email were already generated."
+          exit 1
