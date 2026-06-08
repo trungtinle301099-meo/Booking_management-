@@ -46,7 +46,124 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run API tests
-        run: npm run test:api
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: test-results/junit-results.xml
+        run: npm run test:api -- --reporter=list,junit,html,allure-playwright
+
+      - name: Generate test result summary
+        id: test-summary
+        if: always()
+        run: |
+          python3 <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          junit_path = Path("test-results/junit-results.xml")
+          output_path = Path("test-results/email-summary.txt")
+          output_path.parent.mkdir(parents=True, exist_ok=True)
+
+          run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if not junit_path.exists():
+              body = "\n".join([
+                  "Booking Management API Test finished.",
+                  "",
+                  "Status: ${{ job.status }}",
+                  "",
+                  "JUnit report was not found.",
+                  "Please open GitHub Actions run to check logs:",
+                  run_url,
+              ])
+          else:
+              tree = ET.parse(junit_path)
+              root = tree.getroot()
+
+              testcases = root.findall(".//testcase")
+              total = len(testcases)
+              failed_cases = []
+              skipped_cases = []
+
+              for testcase in testcases:
+                  classname = testcase.attrib.get("classname", "")
+                  name = testcase.attrib.get("name", "")
+                  failure = testcase.find("failure")
+                  error = testcase.find("error")
+                  skipped = testcase.find("skipped")
+
+                  if failure is not None or error is not None:
+                      message = ""
+
+                      if failure is not None:
+                          message = failure.attrib.get("message", "") or (failure.text or "")
+                      elif error is not None:
+                          message = error.attrib.get("message", "") or (error.text or "")
+
+                      first_line_message = message.strip().splitlines()[0] if message else "No failure message"
+
+                      failed_cases.append({
+                          "classname": classname,
+                          "name": name,
+                          "message": first_line_message,
+                      })
+
+                  if skipped is not None:
+                      skipped_cases.append({
+                          "classname": classname,
+                          "name": name,
+                      })
+
+              failed = len(failed_cases)
+              skipped = len(skipped_cases)
+              passed = total - failed - skipped
+
+              lines = []
+              lines.append("Booking Management API Test finished.")
+              lines.append("")
+              lines.append("Status: ${{ job.status }}")
+              lines.append("Repository: ${{ github.repository }}")
+              lines.append("Branch: ${{ github.ref_name }}")
+              lines.append("Workflow: ${{ github.workflow }}")
+              lines.append("Run number: ${{ github.run_number }}")
+              lines.append("")
+              lines.append("Test Summary:")
+              lines.append(f"- Total: {total}")
+              lines.append(f"- Passed: {passed}")
+              lines.append(f"- Failed: {failed}")
+              lines.append(f"- Skipped: {skipped}")
+              lines.append("")
+
+              if failed_cases:
+                  lines.append("Failed Test Cases:")
+                  for index, case in enumerate(failed_cases, start=1):
+                      lines.append(f"{index}. {case['classname']} > {case['name']}")
+                      lines.append(f"   Reason: {case['message']}")
+                  lines.append("")
+              else:
+                  lines.append("Failed Test Cases: None")
+                  lines.append("")
+
+              lines.append("GitHub Actions run:")
+              lines.append(run_url)
+              lines.append("")
+              lines.append("Please download artifacts from this run:")
+              lines.append("- playwright-report-${{ github.run_number }}")
+              lines.append("- test-results-${{ github.run_number }}")
+              lines.append("- allure-results-${{ github.run_number }}")
+              lines.append("")
+              lines.append("Schedule:")
+              lines.append("- 07:00 Asia/Ho_Chi_Minh")
+              lines.append("- 19:00 Asia/Ho_Chi_Minh")
+
+              body = "\n".join(lines)
+
+          output_path.write_text(body)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as github_output:
+              github_output.write("email_body<<EMAIL_BODY_EOF\n")
+              github_output.write(body)
+              github_output.write("\nEMAIL_BODY_EOF\n")
+          PY
 
       - name: Upload Playwright report
         if: always()
@@ -87,25 +204,4 @@ jobs:
           subject: '[Booking Management API Test] ${{ job.status }} - Run #${{ github.run_number }}'
           to: trungtinle301099@gmail.com
           from: Booking Management CI <${{ secrets.MAIL_USERNAME }}>
-          body: |
-            Scheduled API test finished.
-
-            Project: Booking_management-
-            Repository: ${{ github.repository }}
-            Branch: ${{ github.ref_name }}
-            Workflow: ${{ github.workflow }}
-            Job status: ${{ job.status }}
-            Run number: ${{ github.run_number }}
-
-            GitHub Actions run:
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            Report:
-            Please open the GitHub Actions run above and download artifact:
-            - playwright-report-${{ github.run_number }}
-            - test-results-${{ github.run_number }}
-            - allure-results-${{ github.run_number }}
-
-            Schedule:
-            - 07:00 Asia/Ho_Chi_Minh
-            - 19:00 Asia/Ho_Chi_Minh
+          body: ${{ steps.test-summary.outputs.email_body }}
