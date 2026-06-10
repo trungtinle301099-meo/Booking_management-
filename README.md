@@ -1,1298 +1,792 @@
-# Booking Management API Automation — Restful Booker
+````markdown
+# Booking Management API Automation
 
-# frd: https://docs.google.com/document/d/1akz58LQfaUj-D0SMcwCDe581yFAaIrft/edit
+API automation framework for testing the Restful Booker API using Playwright Test and TypeScript.
 
-**Production-ready API automation framework** for [Restful Booker](https://restful-booker.herokuapp.com) REST API, built with **Playwright Test + TypeScript** following enterprise-grade best practices with clean architecture, comprehensive test coverage, and automated reporting.
-
-<div align="center">
-
-[![GitHub](https://img.shields.io/badge/GitHub-trungtinle301099--meo-blue?logo=github)](https://github.com/trungtinle301099-meo/Booking_management-)
-[![Allure Report](https://img.shields.io/badge/Allure-Report-green?logo=https://docs.qameta.io/allure/)](https://trungtinle301099-meo.github.io/Booking_management-/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0+-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Playwright](https://img.shields.io/badge/Playwright-1.60+-blue?logo=playwright)](https://playwright.dev/)
-
-</div>
-
----
-
-## 📖 Table of Contents
-
-- [Overview](#overview)
-- [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Architecture Overview](#architecture-overview)
-- [Configuration](#configuration)
-- [Running Tests](#running-tests)
-- [Allure Reporting](#allure-reporting)
-- [CI/CD Pipeline](#cicd-pipeline)
-- [Code Quality](#code-quality)
-- [Test Development Guide](#test-development-guide)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [Resources](#resources)
-
----
+This project focuses on API test automation for booking management flows, with a layered architecture that separates API client, endpoints, services, test data, types, schemas, helpers, fixtures, and test specifications.
 
 ## Overview
 
-This framework is designed for:
+`Booking_management-` is an API automation project for the public Restful Booker API.
 
-✅ **API Testing** - Complete REST API test coverage  
-✅ **Type Safety** - Full TypeScript support with type validation  
-✅ **Maintainability** - Service layer architecture for easy maintenance  
-✅ **Scalability** - Organized structure supporting hundreds of tests  
-✅ **Reporting** - Rich Allure reports with detailed test metrics  
-✅ **CI/CD Integration** - Automated testing and reporting via GitHub Actions  
-✅ **Best Practices** - Following industry standards and patterns
+The framework is designed to:
 
-The framework architecture separates concerns clearly:
-
-```
-Environment Config
-    ↓
-Test Data & Fixtures
-    ↓
-API Endpoints & Services
-    ↓
-Business Logic Assertions
-    ↓
-Test Specifications
-    ↓
-Allure Reports
-```
-
----
+- Automate Restful Booker API test scenarios.
+- Keep API request logic outside test files.
+- Reuse endpoint definitions, services, test data, types, schemas, and helpers.
+- Run API tests locally with Playwright Test.
+- Generate Playwright HTML and Allure reports.
+- Validate code quality with TypeScript, ESLint, and Prettier.
+- Run automated checks through GitHub Actions.
 
 ## Tech Stack
 
-| Component             | Version | Purpose                      |
-| --------------------- | ------- | ---------------------------- |
-| **Runtime**           |         |                              |
-| Node.js               | 20+     | Runtime environment          |
-| npm                   | Latest  | Package manager              |
-| **Testing**           |         |                              |
-| Playwright Test       | 1.60.0  | API test runner & assertions |
-| TypeScript            | 6.0.3   | Type-safe code               |
-| **Validation**        |         |                              |
-| Zod                   | 4.4.3   | Runtime schema validation    |
-| **Quality & Linting** |         |                              |
-| ESLint                | ^10.4.1 | Code linting                 |
-| TypeScript ESLint     | ^8.60.1 | TS-specific linting          |
-| Prettier              | 3.8.3   | Code formatting              |
-| **Reporting**         |         |                              |
-| Allure Playwright     | 3.9.0   | Rich test reporting          |
-| Allure CLI            | 2.42.0  | Report generation            |
-| **Configuration**     |         |                              |
-| dotenv                | 17.4.2  | Environment management       |
+| Technology | Version / Source | Purpose |
+|---|---:|---|
+| Node.js | 20 in GitHub Actions | Runtime environment |
+| npm | package-lock based | Package manager |
+| TypeScript | 6.0.3 | Type-safe automation code |
+| Playwright Test | 1.60.0 | API test runner and assertions |
+| dotenv | 17.4.2 | Environment variable loading |
+| Zod | 4.4.3 | Runtime response schema validation |
+| ESLint | ^10.4.1 | Code quality checks |
+| TypeScript ESLint | ^8.60.1 | TypeScript linting |
+| Prettier | 3.8.3 | Code formatting |
+| Allure Playwright | 3.9.0 | Allure test result generation |
+| Allure Commandline | 2.42.0 | Allure HTML report generation |
+| GitHub Actions | `.github/workflows` | CI and scheduled test execution |
 
----
+## API Scope
 
-## Prerequisites
+The project targets the Restful Booker API.
 
-### System Requirements
+| Module | Scenario | Method | Endpoint | Auth Required |
+|---|---|---:|---|---|
+| Auth | Create token | POST | `/auth` | No |
+| Booking | Get booking IDs | GET | `/booking` | No |
+| Booking | Get booking by ID | GET | `/booking/{id}` | No |
+| Booking | Create booking | POST | `/booking` | No |
+| Booking | Update booking | PUT | `/booking/{id}` | Yes |
+| Booking | Partial update booking | PATCH | `/booking/{id}` | Yes |
+| Booking | Delete booking | DELETE | `/booking/{id}` | Yes |
 
-| Requirement | Version | Notes                         |
-| ----------- | ------- | ----------------------------- |
-| Node.js     | 20+     | Recommended for LTS stability |
-| npm         | 10+     | Bundled with Node.js          |
-| Git         | Latest  | For version control           |
-| VS Code     | Latest  | Optional, recommended IDE     |
+Authentication token is generated by `POST /auth` and used as a cookie for protected booking APIs:
 
-### Verify Installation
-
-```bash
-# Check Node.js
-node -v
-# Expected: v20.x.x or higher
-
-# Check npm
-npm -v
-# Expected: 10.x.x or higher
-
-# Check Git
-git --version
-# Expected: git version 2.x.x or higher
-```
-
----
-
-## Quick Start
-
-### Step 1: Clone Repository
-
-```bash
-# Clone the repository
-git clone https://github.com/trungtinle301099-meo/Booking_management-.git
-
-# Navigate to project directory
-cd Booking_management-
-
-# Verify project structure
-ls -la
-```
-
-### Step 2: Install Dependencies
-
-```bash
-# Install dependencies from lock file (recommended)
-npm ci
-
-# Or if package-lock.json is missing
-npm install
-```
-
-### Step 3: Install Playwright Browsers
-
-```bash
-# Install Playwright browsers (for future UI tests)
-npx playwright install --with-deps
-
-# Or on macOS (simpler)
-npx playwright install
-```
-
-### Step 4: Setup Environment Variables
-
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env with your settings
-nano .env
-```
-
-**Example `.env` content:**
-
-```env
-# API Configuration
-BASE_URL=https://restful-booker.herokuapp.com
-
-# Restful Booker Credentials
-BOOKING_USERNAME=admin
-BOOKING_PASSWORD=password123
-```
-
-### Step 5: Verify Setup
-
-```bash
-# Run type checking
-npm run type-check
-
-# Run linter
-npm run lint
-
-# Run all API tests
-npm run test:api
-```
-
-### Step 6: View Results
-
-```bash
-# Open Playwright HTML report
-npm run test:report
-
-# Or generate Allure report (requires Allure CLI)
-npm run report:allure
-```
-
----
+```http
+Cookie: token=<token>
+````
 
 ## Project Structure
 
-```
+```text
 Booking_management-/
-│
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                    # GitHub Actions CI pipeline
+│       ├── ci.yml
+│       └── scheduled-api-test.yml
 │
 ├── src/
 │   ├── api/
 │   │   ├── assertions/
-│   │   │   └── response.assertion.ts # Reusable API assertions
-│   │   │
+│   │   │   └── response.assertion.ts
 │   │   ├── clients/
-│   │   │   └── api-client.ts         # HTTP client wrapper
-│   │   │
+│   │   │   └── api-client.ts
 │   │   ├── endpoints/
-│   │   │   ├── auth.endpoint.ts      # Auth endpoint constants
-│   │   │   └── booking.endpoint.ts   # Booking endpoint constants
-│   │   │
+│   │   │   ├── auth.endpoint.ts
+│   │   │   └── booking.endpoint.ts
 │   │   └── services/
-│   │       ├── auth.service.ts       # Auth service methods
-│   │       └── booking.service.ts    # Booking service methods
+│   │       ├── auth.service.ts
+│   │       └── booking.service.ts
 │   │
 │   ├── config/
-│   │   └── env.config.ts             # Environment configuration
+│   │   └── env.config.ts
 │   │
 │   ├── data/
-│   │   ├── auth.data.ts              # Auth test data
-│   │   └── booking.data.ts           # Booking test data
+│   │   ├── auth.data.ts
+│   │   └── booking.data.ts
 │   │
 │   ├── fixtures/
-│   │   └── api.fixture.ts            # Custom Playwright fixtures
+│   │   └── api.fixture.ts
 │   │
 │   ├── helpers/
-│   │   ├── random.helper.ts          # Random data generation
-│   │   ├── token.helper.ts           # Token operations
-│   │   ├── logger.helper.ts          # Logging utilities
-│   │   ├── retry.helper.ts           # Retry logic
-│   │   ├── polling.helper.ts         # Polling utilities
-│   │   ├── allure.helper.ts          # Allure reporting
-│   │   └── test-cleanup.helper.ts    # Test cleanup utilities
+│   │   ├── logger.helper.ts
+│   │   ├── random.helper.ts
+│   │   └── token.helper.ts
 │   │
 │   ├── schemas/
-│   │   ├── auth.schema.ts            # Auth response schemas (Zod)
-│   │   └── booking.schema.ts         # Booking response schemas (Zod)
+│   │   └── booking.schema.ts
 │   │
 │   └── types/
-│       ├── auth.type.ts              # Auth TypeScript types
-│       └── booking.type.ts           # Booking TypeScript types
+│       ├── auth.type.ts
+│       └── booking.type.ts
 │
 ├── tests/
 │   └── api/
 │       ├── auth/
 │       │   └── login.api.spec.ts
-│       │
-│       ├── get_booking_id/
-│       │   └── get-booking-id.api.spec.ts
-│       │
-│       ├── get_booking/
-│       │   └── get-booking.api.spec.ts
-│       │
-│       ├── create_booking/
-│       │   └── create-booking.api.spec.ts
-│       │
-│       ├── update_booking/
-│       │   └── update-booking.api.spec.ts
-│       │
 │       ├── booking/
 │       │   └── update-partial-booking.api.spec.ts
-│       │
-│       └── delete_booking/
-│           └── delete-booking.api.spec.ts
+│       ├── create_booking/
+│       │   └── create-booking.api.spec.ts
+│       ├── delete_booking/
+│       │   └── delete-booking.api.spec.ts
+│       ├── get_booking_id/
+│       │   └── get-booking-id.api.spec.ts
+│       └── update_booking/
+│           └── update-booking.api.spec.ts
 │
-├── allure-results/                   # Allure test results (generated)
-├── allure-report/                    # Allure HTML report (generated)
-├── playwright-report/                # Playwright HTML report (generated)
-├── test-results/                     # Test results (generated)
-│
-├── .env                              # Local env vars (gitignored)
-├── .env.example                      # Env template
-├── .gitignore                        # Git ignore rules
-├── .prettierrc                       # Prettier config
-├── .prettierignore                   # Prettier ignore rules
-├── eslint.config.mjs                 # ESLint config (flat)
-├── package.json                      # Dependencies & scripts
-├── package-lock.json                 # Dependency lock file
-├── playwright.config.ts              # Playwright config
-├── tsconfig.json                     # TypeScript config
-└── README.md                         # This file
+├── .env.example
+├── .gitignore
+├── .prettierignore
+├── .prettierrc
+├── eslint.config.mjs
+├── package.json
+├── package-lock.json
+├── playwright.config.ts
+├── README.md
+└── tsconfig.json
 ```
 
----
+## Folder and File Responsibilities
 
-## Architecture Overview
+| Path                                       | Purpose                                                              |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| `.github/workflows/ci.yml`                 | Main CI workflow for push and pull request validation                |
+| `.github/workflows/scheduled-api-test.yml` | Scheduled API test workflow with email-style HTML summary generation |
+| `src/api/clients/api-client.ts`            | Low-level wrapper around Playwright `APIRequestContext`              |
+| `src/api/endpoints/auth.endpoint.ts`       | Auth endpoint path definitions                                       |
+| `src/api/endpoints/booking.endpoint.ts`    | Booking endpoint path definitions                                    |
+| `src/api/services/auth.service.ts`         | Auth API service methods                                             |
+| `src/api/services/booking.service.ts`      | Booking API service methods                                          |
+| `src/api/assertions/response.assertion.ts` | Reusable API response assertions                                     |
+| `src/config/env.config.ts`                 | Centralized environment configuration                                |
+| `src/data/auth.data.ts`                    | Auth API test data                                                   |
+| `src/data/booking.data.ts`                 | Booking API test data with random values                             |
+| `src/fixtures/api.fixture.ts`              | Custom Playwright fixture that injects API client and services       |
+| `src/helpers/logger.helper.ts`             | Colored console logger helper                                        |
+| `src/helpers/random.helper.ts`             | Random test data generator                                           |
+| `src/helpers/token.helper.ts`              | Auth token generation helper                                         |
+| `src/schemas/booking.schema.ts`            | Zod schemas for booking and token responses                          |
+| `src/types/auth.type.ts`                   | Auth request/response TypeScript types                               |
+| `src/types/booking.type.ts`                | Booking request/response TypeScript types                            |
+| `tests/api/**`                             | API test specifications                                              |
 
-### 1. **Endpoint Layer** (`src/api/endpoints/`)
+## Architecture
 
-Defines API endpoint constants and routes.
+The project follows a layered API automation architecture:
 
-```typescript
-// Example: auth.endpoint.ts
-export const AUTH_ENDPOINTS = {
-  LOGIN: '/auth',
-} as const;
-
-// Example: booking.endpoint.ts
-export const BOOKING_ENDPOINTS = {
-  LIST: '/booking',
-  DETAIL: (id: number) => `/booking/${id}`,
-  CREATE: '/booking',
-  UPDATE: (id: number) => `/booking/${id}`,
-  DELETE: (id: number) => `/booking/${id}`,
-} as const;
+```text
+.env
+  ↓
+src/config/env.config.ts
+  ↓
+playwright.config.ts
+  ↓
+src/fixtures/api.fixture.ts
+  ↓
+src/api/clients/api-client.ts
+  ↓
+src/api/endpoints/*.endpoint.ts
+  ↓
+src/api/services/*.service.ts
+  ↓
+src/data + src/types + src/schemas + src/helpers
+  ↓
+tests/api/**/*.api.spec.ts
+  ↓
+Playwright HTML Report / Allure Report / GitHub Actions
 ```
 
-**Benefits:**
+### Layer Rules
 
-- Centralized route management
-- Easy to update when API changes
-- Prevents hardcoded URLs in tests
+| Layer      | Rule                                                         |
+| ---------- | ------------------------------------------------------------ |
+| Test spec  | Describes scenario, calls service, and performs assertions   |
+| Service    | Calls API client with endpoint and payload                   |
+| API client | Wraps Playwright request methods                             |
+| Endpoint   | Stores API paths only                                        |
+| Data       | Stores reusable request payloads                             |
+| Types      | Stores compile-time TypeScript request/response types        |
+| Schemas    | Stores runtime Zod validation schemas                        |
+| Helpers    | Stores reusable logic such as token, random data, and logger |
+| Fixtures   | Injects dependencies into test specs                         |
 
-### 2. **API Client Layer** (`src/api/clients/`)
+## Prerequisites
 
-Wraps HTTP client with authentication, error handling, and logging.
+Install the following before running the project:
 
-```typescript
-// Example usage
-const client = new APIClient(baseUrl);
-const response = await client.get(endpoint, { headers });
-const response = await client.post(endpoint, body, { headers });
-const response = await client.patch(endpoint, body, { headers });
-const response = await client.delete(endpoint, { headers });
+* Node.js 20 or compatible version
+* npm
+* Git
+
+The GitHub Actions workflows use Node.js 20.
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/trungtinle301099-meo/Booking_management-.git
+cd Booking_management-
 ```
 
-**Responsibilities:**
+Install dependencies:
 
-- HTTP request/response handling
-- Authentication token injection
-- Error handling & retries
-- Request/response logging
-
-### 3. **Service Layer** (`src/api/services/`)
-
-Business logic for API operations with methods grouped by domain.
-
-```typescript
-// Example: booking.service.ts
-export class BookingService {
-  constructor(private client: APIClient) {}
-
-  async createBooking(data: Booking): Promise<Response> {
-    return this.client.post(BOOKING_ENDPOINTS.CREATE, data);
-  }
-
-  async getBooking(id: number): Promise<Response> {
-    return this.client.get(BOOKING_ENDPOINTS.DETAIL(id));
-  }
-
-  async updateBooking(id: number, data: Booking, token: string): Promise<Response> {
-    return this.client.put(BOOKING_ENDPOINTS.UPDATE(id), data, {
-      headers: { Cookie: `token=${token}` },
-    });
-  }
-
-  async partialUpdateBooking(id: number, data: Partial<Booking>, token: string): Promise<Response> {
-    return this.client.patch(BOOKING_ENDPOINTS.UPDATE(id), data, {
-      headers: { Cookie: `token=${token}` },
-    });
-  }
-
-  async deleteBooking(id: number, token: string): Promise<Response> {
-    return this.client.delete(BOOKING_ENDPOINTS.DELETE(id), {
-      headers: { Cookie: `token=${token}` },
-    });
-  }
-}
+```bash
+npm ci
 ```
 
-**Benefits:**
+If `npm ci` fails because the lockfile is missing or out of sync, run:
 
-- Encapsulation of API logic
-- Reusable methods across tests
-- Easy to mock for unit testing
-- Single responsibility principle
-
-### 4. **Fixture Layer** (`src/fixtures/`)
-
-Custom Playwright fixtures providing test utilities and services.
-
-```typescript
-// Example: api.fixture.ts
-export const test = base.extend<APIFixture>({
-  bookingService: async ({ request }, use) => {
-    const client = new APIClient(process.env.BASE_URL!);
-    const service = new BookingService(client);
-    await use(service);
-  },
-
-  authService: async ({ request }, use) => {
-    const client = new APIClient(process.env.BASE_URL!);
-    const service = new AuthService(client);
-    await use(service);
-  },
-});
+```bash
+npm install
 ```
 
-**Usage in tests:**
+## Environment Configuration
 
-```typescript
-test('should create booking', async ({ bookingService, authService }) => {
-  const response = await bookingService.createBooking(data);
-  expect(response.status()).toBe(200);
-});
-```
-
-**Benefits:**
-
-- Automatic service initialization
-- Consistent test setup/teardown
-- Dependency injection pattern
-- Reduced boilerplate
-
-### 5. **Data Layer** (`src/data/`)
-
-Test data with random generation for test isolation.
-
-```typescript
-// Example: booking.data.ts
-import { randomString, randomPrice, randomBookingDates } from '../helpers/random.helper';
-
-const { checkin, checkout } = randomBookingDates();
-
-export const createBookingData: Booking = {
-  firstname: randomString('FirstName'),
-  lastname: randomString('LastName'),
-  totalprice: randomPrice(50, 500),
-  depositpaid: true,
-  bookingdates: { checkin, checkout },
-  additionalneeds: randomAdditionalNeeds(),
-};
-```
-
-**Benefits:**
-
-- Reusable test data
-- Random data prevents test interdependencies
-- Ensures tests pass consistently
-- Easier data maintenance
-
-### 6. **Schema Layer** (`src/schemas/`)
-
-Zod schema validation for API responses.
-
-```typescript
-// Example: booking.schema.ts
-import { z } from 'zod';
-
-const bookingDatesSchema = z.object({
-  checkin: z.string(),
-  checkout: z.string(),
-});
-
-const bookingSchema = z.object({
-  firstname: z.string(),
-  lastname: z.string(),
-  totalprice: z.number(),
-  depositpaid: z.boolean(),
-  bookingdates: bookingDatesSchema,
-  additionalneeds: z.string(),
-});
-
-export const createBookingResponseSchema = z.object({
-  bookingid: z.number(),
-  booking: bookingSchema,
-});
-```
-
-**Usage in tests:**
-
-```typescript
-const response = await bookingService.createBooking(data);
-const body = await response.json();
-const validated = createBookingResponseSchema.parse(body); // Throws if invalid
-```
-
-**Benefits:**
-
-- Runtime response validation
-- Type safety for API responses
-- Early error detection
-- Clear error messages
-
-### 7. **Test Layer** (`tests/api/`)
-
-Organized test specifications following AAA pattern (Arrange, Act, Assert).
-
-```typescript
-test('CREATE_BOOKING_001 - should create booking successfully', async ({
-  bookingService,
-  authService,
-}) => {
-  // Arrange: Setup test data and preconditions
-  const testData = createBookingData;
-  const token = await generateAuthToken(authService);
-
-  // Act: Execute the action being tested
-  const response = await bookingService.createBooking(testData);
-  const body = (await response.json()) as CreateBookingResponse;
-
-  // Assert: Verify the results
-  expect(response.status()).toBe(200);
-  expect(body.bookingid).toBeGreaterThan(0);
-  expect(body.booking.firstname).toBe(testData.firstname);
-});
-```
-
-**Best Practices:**
-
-- One responsibility per test
-- Clear test naming (ACTION_WHAT_EXPECTED)
-- Arrange-Act-Assert pattern
-- Independent test execution
-- Proper cleanup (beforeEach/afterEach)
-
----
-
-## Configuration
-
-### Environment Variables (`.env`)
+Create a local `.env` file from `.env.example`:
 
 ```bash
 cp .env.example .env
 ```
 
-**Configuration options:**
+Expected environment variables:
 
 ```env
-# API Configuration
 BASE_URL=https://restful-booker.herokuapp.com
-
-# Authentication
 BOOKING_USERNAME=admin
 BOOKING_PASSWORD=password123
-
-# (Optional) Proxy configuration
-# HTTP_PROXY=http://proxy.company.com:8080
-# HTTPS_PROXY=https://proxy.company.com:8080
-
-# (Optional) Timeouts
-# API_TIMEOUT=30000
 ```
 
-### Playwright Configuration (`playwright.config.ts`)
+| Variable           | Purpose                            |
+| ------------------ | ---------------------------------- |
+| `BASE_URL`         | Base URL of the Restful Booker API |
+| `BOOKING_USERNAME` | Username for token generation      |
+| `BOOKING_PASSWORD` | Password for token generation      |
 
-```typescript
-import { defineConfig, devices } from '@playwright/test';
+Local `.env` should not be committed.
 
-export default defineConfig({
-  testDir: './tests',
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ['html'],
-    ['json', { outputFile: 'test-results/results.json' }],
-    ['allure-playwright'],
-  ],
-  use: {
-    baseURL: process.env.BASE_URL || 'https://restful-booker.herokuapp.com',
-    trace: 'on-first-retry',
-  },
-});
-```
+## Available Scripts
 
-### TypeScript Configuration (`tsconfig.json`)
-
-- Strict type checking enabled
-- Path aliases for clean imports (`@`, `@api`, `@helpers`, etc.)
-- CommonJS + ESNext module support
-- ES2022 target
-
----
+| Script            | Command                                                                          | Description                                 |
+| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------- |
+| `test`            | `playwright test`                                                                | Run all Playwright tests                    |
+| `test:api`        | `playwright test tests/api`                                                      | Run all API tests                           |
+| `test:auth`       | `playwright test tests/api/auth`                                                 | Run Auth API tests                          |
+| `test:booking`    | `playwright test tests/api/booking`                                              | Run tests under `tests/api/booking`         |
+| `test:report`     | `playwright show-report`                                                         | Open Playwright HTML report                 |
+| `type-check`      | `tsc --noEmit`                                                                   | Run TypeScript type checking                |
+| `lint`            | `eslint .`                                                                       | Run ESLint                                  |
+| `format`          | `prettier . --write`                                                             | Format project files                        |
+| `format:check`    | `prettier . --check`                                                             | Check formatting                            |
+| `check`           | `npm run type-check && npm run lint && npm run format:check && npm run test:api` | Run full local quality gate                 |
+| `security:audit`  | `npm audit --audit-level=high`                                                   | Check high-level dependency vulnerabilities |
+| `allure:generate` | `allure generate allure-results --clean -o allure-report`                        | Generate Allure HTML report                 |
+| `allure:open`     | `allure open allure-report`                                                      | Open generated Allure report                |
+| `allure:serve`    | `allure serve allure-results`                                                    | Serve Allure results                        |
+| `allure:clean`    | `rm -rf allure-results allure-report`                                            | Remove Allure output folders                |
+| `test:api:allure` | `npm run allure:clean && playwright test tests/api`                              | Clean Allure output and run API tests       |
+| `report:allure`   | `npm run test:api:allure && npm run allure:generate && npm run allure:open`      | Run API tests and open Allure report        |
 
 ## Running Tests
 
-### Run All Tests
+Run all API tests:
 
 ```bash
-# Run all tests (API only)
 npm run test:api
-
-# Run tests with UI (watch mode)
-npm run test -- --ui
-
-# Run tests in debug mode
-npm run test -- --debug
 ```
 
-### Run Specific Test Suite
+Run Auth API tests:
 
 ```bash
-# Run Auth tests only
 npm run test:auth
+```
 
-# Run Booking tests only
+Run tests under `tests/api/booking`:
+
+```bash
 npm run test:booking
-
-# Run specific test file
-npm run test:api -- tests/api/create_booking/create-booking.api.spec.ts
-
-# Run tests matching pattern
-npm run test:api -- -g "CREATE_BOOKING"
 ```
 
-### Run with Options
+Run a specific test file:
 
 ```bash
-# Run with specific number of workers
-npm run test:api -- --workers=4
-
-# Run with custom timeout (30 seconds)
-npm run test:api -- --timeout=30000
-
-# Run with retries
-npm run test:api -- --retries=3
-
-# Run in headed mode (shows browser activity for debugging)
-npm run test:api -- --headed
-
-# Dry run (don't actually run tests)
-npm run test:api -- --list
+npx playwright test tests/api/create_booking/create-booking.api.spec.ts
 ```
 
-### Test Filtering
+Run full local validation:
 
 ```bash
-# Run tests by file
-npm run test:api -- tests/api/booking/create-booking.api.spec.ts
-
-# Run tests matching regex
-npm run test:api -- -g "should create"
-
-# Run tests by tag (@smoke, @regression, etc.)
-npm run test:api -- --grep "@smoke"
-
-# Run tests excluding pattern
-npm run test:api -- -g "should not"
-```
-
----
-
-## Allure Reporting
-
-### What is Allure?
-
-Allure is an open-source reporting framework providing rich, interactive test reports with:
-
-✅ Test history and trends  
-✅ Detailed test steps and attachments  
-✅ Failure analysis and screenshots  
-✅ Test metrics and statistics  
-✅ Integration with CI/CD pipelines
-
-### Generate Allure Report
-
-```bash
-# Clean results and run tests, then generate report
-npm run report:allure
-
-# Or step-by-step:
-
-# 1. Clean previous results
-npm run allure:clean
-
-# 2. Run tests (generates allure-results/)
-npm run test:api
-
-# 3. Generate HTML report
-npm run allure:generate
-
-# 4. Open report in browser
-npm run allure:open
-
-# Or serve from localhost:4040
-npm run allure:serve
-```
-
-### Allure Report Structure
-
-```
-allure-report/
-├── index.html                    # Main report page
-├── widgets/
-│   ├── summary.json              # Test summary
-│   ├── categories-trend.json      # Category trends
-│   └── duration-trend.json        # Duration trends
-├── data/
-│   ├── test-cases/
-│   │   └── {test-id}.json        # Individual test details
-│   ├── behaviors.json            # Behavior mapping
-│   ├── categories.json           # Category grouping
-│   └── timeline.json             # Execution timeline
-└── ...
-```
-
-### Viewing Reports
-
-**Option 1: Local Allure Report**
-
-```bash
-npm run allure:open
-# Opens: file:///path/to/allure-report/index.html
-```
-
-**Option 2: GitHub Pages Hosting**
-
-```
-https://trungtinle301099-meo.github.io/Booking_management-/
-```
-
-The GitHub Actions workflow automatically publishes reports to GitHub Pages on each CI run.
-
-### Allure Annotations in Tests
-
-```typescript
-import { feature, story, severity, description } from 'allure-js-commons';
-
-test('CREATE_BOOKING_001 - create booking', async ({ bookingService }) => {
-  await feature('Booking Management');
-  await story('Create Booking');
-  await severity('critical');
-  await description('Verify that user can create a booking with valid data');
-
-  // Test code...
-
-  await test.info().attach('request-body.json', {
-    body: JSON.stringify(requestData, null, 2),
-    contentType: 'application/json',
-  });
-});
-```
-
-### Example Allure Report Features
-
-- **Test Summary**: Total, passed, failed, skipped counts
-- **Test Timeline**: Execution duration and order
-- **Test Details**: Steps, attachments, parameters
-- **Failure Analysis**: Error messages and stack traces
-- **Test History**: Trends over multiple runs
-- **Categories**: Group tests by type, feature, or severity
-
----
-
-## CI/CD Pipeline
-
-### GitHub Actions Workflow
-
-The project includes automated CI/CD via GitHub Actions (`.github/workflows/ci.yml`).
-
-**Workflow Triggers:**
-
-- On `push` to main branch
-- On `pull_request`
-- Manual trigger (`workflow_dispatch`)
-
-**Workflow Steps:**
-
-1. **Setup** - Install dependencies
-2. **Type Check** - TypeScript compilation
-3. **Lint** - ESLint code analysis
-4. **Test** - Run all API tests
-5. **Generate Report** - Create Allure report
-6. **Publish Report** - Deploy to GitHub Pages
-7. **Upload Artifacts** - Store test results
-
-### GitHub Actions Features
-
-```yaml
-# Automatic test matrix
-strategy:
-  matrix:
-    node-version: [20.x]
-
-# Automatic retry on failure
-retry: 2
-
-# Parallel test execution
-workers: 4
-
-# Artifact retention
-retention-days: 30
-```
-
-### Viewing CI/CD Results
-
-1. Go to GitHub repository
-2. Click "Actions" tab
-3. Select workflow run
-4. View job logs and artifacts
-5. View published Allure report at: https://trungtinle301099-meo.github.io/Booking_management-/
-
----
-
-## Code Quality
-
-### Type Checking
-
-```bash
-# Run TypeScript type check
-npm run type-check
-
-# Watch mode for development
-npm run type-check -- --watch
-```
-
-**Features:**
-
-- Strict null checking
-- NoUnusedLocals disabled (for flexibility)
-- Path aliases for clean imports
-- JSDoc support
-
-### Linting
-
-```bash
-# Run ESLint
-npm run lint
-
-# Fix auto-fixable issues
-npm run lint -- --fix
-```
-
-**Rules:**
-
-- TypeScript ESLint rules
-- Playwright best practices
-- Code consistency
-
-### Code Formatting
-
-```bash
-# Check formatting
-npm run format:check
-
-# Auto-format code
-npm run format
-```
-
-**Prettier Config:**
-
-- 80-char line width
-- 2-space indentation
-- Single quotes
-- Trailing commas
-
-### Security Audit
-
-```bash
-# Audit dependencies for vulnerabilities
-npm run security:audit
-
-# Fix vulnerabilities
-npm audit fix
-```
-
-### Complete Code Check
-
-```bash
-# Run all checks (type, lint, format, tests)
 npm run check
 ```
 
----
+## Reports
 
-## Test Development Guide
+### Playwright HTML Report
 
-### Writing Your First Test
-
-**1. Create test file** (`tests/api/booking/my-test.api.spec.ts`):
-
-```typescript
-import { test, expect } from '../../../src/fixtures/api.fixture';
-import { expectStatus } from '../../../src/api/assertions/response.assertion';
-import { logger } from '../../../src/helpers/logger.helper';
-
-test.describe('[Booking API] My Feature', () => {
-  let testDataId: number | undefined;
-
-  test.beforeEach(async ({ bookingService }) => {
-    // Setup: Create test data
-    const response = await bookingService.createBooking(testData);
-    const body = await response.json();
-    testDataId = body.bookingid;
-    logger.info(`Created booking: ${testDataId}`);
-  });
-
-  test.afterEach(async ({ bookingService }) => {
-    // Cleanup: Delete test data
-    if (testDataId) {
-      await bookingService.deleteBooking(testDataId, token);
-      logger.info(`Deleted booking: ${testDataId}`);
-    }
-  });
-
-  test('MY_TEST_001 - should do something', async ({ bookingService }) => {
-    // Arrange
-    const testData = {
-      /* ... */
-    };
-
-    // Act
-    const response = await bookingService.someMethod(testData);
-
-    // Assert
-    await expectStatus(response, 200);
-    const body = await response.json();
-    expect(body.id).toBeDefined();
-
-    logger.pass('MY_TEST_001 - Test passed');
-  });
-});
-```
-
-**2. Run your test:**
-
-```bash
-npm run test:api -- -g "MY_TEST_001"
-```
-
-**3. View results:**
+After running tests, open the Playwright HTML report:
 
 ```bash
 npm run test:report
 ```
 
-### Test Naming Convention
+Generated folder:
 
-```
-{ACTION}_{RESOURCE}_{CASE_NUMBER} - {SHORT_DESCRIPTION}
-
-Examples:
-- CREATE_BOOKING_001 - should create booking with valid data
-- UPDATE_BOOKING_002 - should update firstname only
-- DELETE_BOOKING_001 - should delete booking successfully
-- GET_BOOKING_001 - should retrieve booking by ID
-- PATCH_BOOKING_FIRSTNAME_001 - should update firstname field only
+```text
+playwright-report/
 ```
 
-### AAA Pattern
+### Allure Report
 
-Every test should follow Arrange-Act-Assert:
+Generate Allure report:
 
-```typescript
-test('should do something', async ({ service }) => {
-  // ✅ ARRANGE: Setup preconditions and test data
-  const testData = { name: 'John', age: 30 };
-  const preconditionId = await setupPrecondition();
-
-  // ✅ ACT: Execute the action being tested
-  const response = await service.doSomething(testData);
-  const result = await response.json();
-
-  // ✅ ASSERT: Verify the results
-  expect(response.status()).toBe(200);
-  expect(result.id).toBe(preconditionId);
-  expect(result.name).toBe('John');
-});
+```bash
+npm run allure:generate
 ```
 
-### Best Practices
+Open generated Allure report:
 
-✅ **DO:**
-
-- One logical assertion per test
-- Clear, descriptive test names
-- Use test fixtures for setup/teardown
-- Validate response status and structure
-- Use random data to prevent interdependencies
-- Document complex test logic with comments
-- Include before/after hooks for cleanup
-
-❌ **DON'T:**
-
-- Hardcode values or IDs
-- Depend on test execution order
-- Share state between tests
-- Test multiple unrelated things in one test
-- Ignore cleanup (memory/resource leaks)
-- Use sleep/wait unless necessary
-- Mock API responses (test real API)
-
-### Using Helpers
-
-**Random Data:**
-
-```typescript
-import { randomString, randomPrice, randomAdditionalNeeds } from '@helpers/random.helper';
-
-const firstName = randomString('FirstName');
-const price = randomPrice(100, 500);
-const needs = randomAdditionalNeeds();
+```bash
+npm run allure:open
 ```
 
-**Token Generation:**
+Run API tests, generate Allure report, and open it:
 
-```typescript
-import { generateAuthToken } from '@helpers/token.helper';
+```bash
+npm run report:allure
+```
+
+Generated folders:
+
+```text
+allure-results/
+allure-report/
+```
+
+Generated report folders are ignored and should not be committed.
+
+## CI/CD
+
+The project contains two GitHub Actions workflows.
+
+### Main CI Workflow
+
+File:
+
+```text
+.github/workflows/ci.yml
+```
+
+Trigger:
+
+* Push to `main` or `master`
+* Pull request to `main` or `master`
+
+Main steps:
+
+1. Checkout source
+2. Setup Node.js 20
+3. Install dependencies with `npm ci`
+4. Run TypeScript type check
+5. Run ESLint
+6. Run Prettier format check
+7. Run API tests
+8. Generate Allure report
+9. Run security audit
+10. Upload Playwright report artifact
+11. Upload Allure report artifact
+12. Upload Allure raw results artifact
+
+### Scheduled API Test Workflow
+
+File:
+
+```text
+.github/workflows/scheduled-api-test.yml
+```
+
+Trigger:
+
+* Every day at 07:00 Asia/Ho_Chi_Minh
+* Every day at 19:00 Asia/Ho_Chi_Minh
+* Manual `workflow_dispatch`
+
+Schedule:
+
+```yaml
+- cron: '0 0 * * *'
+- cron: '0 12 * * *'
+```
+
+Main behavior:
+
+1. Checkout source code
+2. Setup Node.js 20
+3. Install dependencies
+4. Install Playwright browsers
+5. Run API tests with `list`, `junit`, `html`, and `allure-playwright` reporters
+6. Generate HTML test result summary
+7. Upload reports and test artifacts
+8. Send scheduled API test email report
+9. Mark workflow as failed if API tests failed
+
+## Code Quality
+
+### TypeScript
+
+TypeScript config uses:
+
+* `target`: `ES2022`
+* `module`: `ESNext`
+* `moduleResolution`: `Bundler`
+* `strict`: `true`
+* `noImplicitAny`: `true`
+* `strictNullChecks`: `true`
+* `noEmit`: `true`
+
+Run type checking:
+
+```bash
+npm run type-check
+```
+
+### ESLint
+
+ESLint is configured for:
+
+* `src/**/*.ts`
+* `tests/**/*.ts`
+* `playwright.config.ts`
+
+Ignored folders include generated reports, coverage, dist, and lockfile.
+
+Run lint:
+
+```bash
+npm run lint
+```
+
+### Prettier
+
+Prettier config:
+
+```json
+{
+  "semi": true,
+  "singleQuote": true,
+  "printWidth": 100,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "endOfLine": "lf"
+}
+```
+
+Format files:
+
+```bash
+npm run format
+```
+
+Check format:
+
+```bash
+npm run format:check
+```
+
+The current `.prettierignore` excludes generated folders and GitHub workflow files.
+
+## Test Implementation Notes
+
+### Import Custom Fixture
+
+API test specs should import `test` and `expect` from the custom fixture:
+
+```ts
+import { test, expect } from '../../../src/fixtures/api.fixture';
+```
+
+This gives tests access to injected services such as:
+
+* `apiClient`
+* `authService`
+* `bookingService`
+
+### Use Service Layer
+
+Do not call Playwright request directly in test specs when a service method already exists.
+
+Preferred:
+
+```ts
+const response = await bookingService.createBooking(createBookingData);
+```
+
+Avoid:
+
+```ts
+await request.post('/booking', { data: createBookingData });
+```
+
+### Use Endpoint Layer
+
+Endpoint paths should stay in:
+
+```text
+src/api/endpoints/auth.endpoint.ts
+src/api/endpoints/booking.endpoint.ts
+```
+
+### Use Data Layer
+
+Reusable request payloads should stay in:
+
+```text
+src/data/auth.data.ts
+src/data/booking.data.ts
+```
+
+### Use Type Definitions
+
+Request and response types should stay in:
+
+```text
+src/types/auth.type.ts
+src/types/booking.type.ts
+```
+
+### Use Schema Validation When Needed
+
+Runtime schema validation is currently handled in:
+
+```text
+src/schemas/booking.schema.ts
+```
+
+Current schemas include:
+
+* `bookingDatesSchema`
+* `bookingSchema`
+* `createBookingResponseSchema`
+* `bookingIdResponseSchema`
+* `createTokenResponseSchema`
+
+### Use Token Helper
+
+Protected Booking APIs require token generation.
+
+Use:
+
+```ts
+import { generateAuthToken } from '../../../src/helpers/token.helper';
 
 const token = await generateAuthToken(authService);
 ```
 
-**Logging:**
+### Use Assertion Helper
 
-```typescript
-import { logger } from '@helpers/logger.helper';
+Reusable API response assertions are in:
 
-logger.info('Test started');
-logger.step('Creating booking');
-logger.pass('Test passed');
+```text
+src/api/assertions/response.assertion.ts
 ```
 
-**Retry Logic:**
+Example:
 
-```typescript
-import { retryAction } from '@helpers/retry.helper';
-
-const response = await retryAction(() => bookingService.createBooking(data), {
-  retries: 2,
-  delayMs: 500,
-  retryName: 'Create booking',
-});
+```ts
+await expectStatus(response, 200);
 ```
 
----
+## Current Test Coverage
+
+| Test Area              | File                                                   |
+| ---------------------- | ------------------------------------------------------ |
+| Auth create token      | `tests/api/auth/login.api.spec.ts`                     |
+| Get booking IDs        | `tests/api/get_booking_id/get-booking-id.api.spec.ts`  |
+| Create booking         | `tests/api/create_booking/create-booking.api.spec.ts`  |
+| Update booking         | `tests/api/update_booking/update-booking.api.spec.ts`  |
+| Partial update booking | `tests/api/booking/update-partial-booking.api.spec.ts` |
+| Delete booking         | `tests/api/delete_booking/delete-booking.api.spec.ts`  |
+
+## How to Add a New API Test
+
+Follow this flow when adding a new API test:
+
+1. Identify the API module.
+2. Check whether the endpoint already exists in `src/api/endpoints`.
+3. Check whether the service method already exists in `src/api/services`.
+4. Add or reuse request data in `src/data`.
+5. Add or reuse TypeScript types in `src/types`.
+6. Add or reuse Zod schemas in `src/schemas` if runtime validation is needed.
+7. Write the test spec under `tests/api`.
+8. Import `test` and `expect` from `src/fixtures/api.fixture`.
+9. Call API through service layer.
+10. Assert status code and response body.
+11. Add cleanup if the test creates data and cleanup is supported.
+12. Run the target test file.
+13. Run `npm run check` before pushing.
+
+Example test file path:
+
+```text
+tests/api/create_booking/create-booking.api.spec.ts
+```
+
+Example command:
+
+```bash
+npx playwright test tests/api/create_booking/create-booking.api.spec.ts
+```
+
+## Data Dependency Rules
+
+Restful Booker is a public API, so test data can change.
+
+Recommended rules:
+
+* Do not depend on fixed public booking IDs.
+* Do not assert a fixed total number of bookings.
+* Create booking data inside the test when testing update/delete flows.
+* Use the booking ID returned from the create response.
+* Clean up created booking data when possible.
+* Avoid deleting or updating public booking IDs.
+
+## Generated Files
+
+Do not commit generated files or local secrets.
+
+Ignored files/folders include:
+
+```text
+node_modules/
+.env
+playwright-report/
+test-results/
+coverage/
+dist/
+allure-results/
+allure-report/
+.DS_Store
+```
 
 ## Troubleshooting
 
-### Common Issues
+### 1. `npm ci` fails
 
-#### Issue: `npm ci` fails with "ERESOLVE"
+Possible reasons:
 
-**Solution:**
+* `package-lock.json` is out of sync with `package.json`.
+* Node/npm version mismatch.
+* Dependency registry issue.
+
+Try:
 
 ```bash
-# Use npm install instead
 npm install
-
-# Or force legacy peer deps
-npm ci --legacy-peer-deps
 ```
 
-#### Issue: Tests timeout
+Then commit the updated `package-lock.json` only if dependency changes are intentional.
 
-**Solution:**
+### 2. Missing environment variables
+
+Create `.env` from `.env.example`:
 
 ```bash
-# Increase timeout
-npm run test:api -- --timeout=60000
-
-# Or in test code
-test.setTimeout(60000);
+cp .env.example .env
 ```
 
-#### Issue: Playwright browsers not found
+Check that it contains:
 
-**Solution:**
+```env
+BASE_URL=https://restful-booker.herokuapp.com
+BOOKING_USERNAME=admin
+BOOKING_PASSWORD=password123
+```
+
+### 3. Token generation fails
+
+Check:
+
+* `BOOKING_USERNAME`
+* `BOOKING_PASSWORD`
+* `BASE_URL`
+* Restful Booker API availability
+* `src/data/auth.data.ts`
+* `src/api/services/auth.service.ts`
+
+### 4. Protected Booking API returns unauthorized
+
+Check that the token is generated and passed as cookie:
+
+```http
+Cookie: token=<token>
+```
+
+Protected APIs include:
+
+* `PUT /booking/{id}`
+* `PATCH /booking/{id}`
+* `DELETE /booking/{id}`
+
+### 5. TypeScript check fails
+
+Run:
 
 ```bash
-# Reinstall browsers
-npx playwright install --with-deps
-
-# Or with specific browsers
-npx playwright install chromium firefox webkit
+npm run type-check
 ```
 
-#### Issue: API returns 401 Unauthorized
+Then check:
 
-**Solution:**
+* Import paths
+* Type-only imports
+* Type definitions in `src/types`
+* Path aliases in `tsconfig.json`
 
-```typescript
-// Verify token is being set
-console.log('Token:', token);
+### 6. ESLint fails
 
-// Check token expiration
-const response = await bookingService.someMethod(data, token);
-
-// Generate new token if needed
-const newToken = await generateAuthToken(authService);
-```
-
-#### Issue: Tests pass locally but fail in CI
-
-**Solution:**
+Run:
 
 ```bash
-# Test with CI environment variables
-CI=true npm run test:api
-
-# Run with retries like CI
-npm run test:api -- --retries=2
-
-# Run sequentially like CI
-npm run test:api -- --workers=1
+npm run lint
 ```
 
-#### Issue: Allure report not generating
+Fix the reported issues before pushing.
 
-**Solution:**
+### 7. Prettier check fails
+
+Run:
 
 ```bash
-# Verify Allure CLI is installed
-npx allure --version
+npm run format
+```
 
-# Clean and regenerate
-npm run allure:clean
-npm run test:api
+Then verify:
+
+```bash
+npm run format:check
+```
+
+### 8. Allure report does not open
+
+Generate the report first:
+
+```bash
 npm run allure:generate
+```
+
+Then open:
+
+```bash
 npm run allure:open
 ```
 
-### Debug Mode
+### 9. Playwright HTML report does not open
+
+Run tests first:
 
 ```bash
-# Run in debug mode with inspector
-npm run test:api -- --debug
-
-# Run with verbose output
-npm run test:api -- --verbose
-
-# Run specific test with full output
-npm run test:api -- -g "TEST_NAME" --reporter=list
+npm run test:api
 ```
 
-### Viewing Logs
-
-**Playwright HTML Report:**
+Then open the report:
 
 ```bash
 npm run test:report
-# Open: playwright-report/index.html
 ```
 
-**Allure Report:**
+## Notes
 
-```bash
-npm run allure:serve
-# Open: http://localhost:4040
-```
-
-**Console Output:**
-
-```bash
-npm run test:api -- --reporter=list
-```
-
----
-
-## Contributing
-
-### Development Workflow
-
-1. **Create feature branch:**
-
-   ```bash
-   git checkout -b feature/my-feature
-   ```
-
-2. **Write tests:**
-
-   ```bash
-   # Add test files
-   nano tests/api/my-feature/my-test.api.spec.ts
-   ```
-
-3. **Run local checks:**
-
-   ```bash
-   npm run check
-   ```
-
-4. **Commit changes:**
-
-   ```bash
-   git add .
-   git commit -m "feat: add my feature tests"
-   ```
-
-5. **Push and create PR:**
-
-   ```bash
-   git push origin feature/my-feature
-   ```
-
-6. **Wait for CI to pass, then merge**
-
-### Code Standards
-
-- Follow existing patterns and naming conventions
-- Write descriptive test names
-- Include proper test data and assertions
-- Add comments for complex logic
-- Keep tests independent and isolated
-- Clean up test data in afterEach hooks
-
-### Adding New API Endpoints
-
-1. **Define endpoint** in `src/api/endpoints/`:
-
-   ```typescript
-   export const NEW_ENDPOINTS = {
-     ACTION: '/new/endpoint',
-   } as const;
-   ```
-
-2. **Add service method** in `src/api/services/`:
-
-   ```typescript
-   async newMethod(data: Type): Promise<Response> {
-     return this.client.post(NEW_ENDPOINTS.ACTION, data);
-   }
-   ```
-
-3. **Add schema** in `src/schemas/`:
-
-   ```typescript
-   export const newResponseSchema = z.object({
-     /* ... */
-   });
-   ```
-
-4. **Write tests** in `tests/api/new-feature/`:
-   ```typescript
-   test('NEW_TEST_001 - should test new feature', async ({ service }) => {
-     // Test code
-   });
-   ```
-
----
-
-## Resources
-
-### Official Documentation
-
-- [Playwright Documentation](https://playwright.dev/)
-- [Playwright Test API](https://playwright.dev/docs/api/class-test)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [Zod Documentation](https://zod.dev/)
-- [Allure Reports](https://docs.qameta.io/allure/)
-- [ESLint Documentation](https://eslint.org/docs/rules/)
-
-### REST API Endpoint
-
-- [Restful Booker API](https://restful-booker.herokuapp.com/)
-- [API Documentation](https://restful-booker.herokuapp.com/apidoc/index.html)
-
-### Best Practices
-
-- [REST API Testing Best Practices](https://assertible.com/blog/rest-api-testing-best-practices)
-- [API Automation Testing Strategy](https://www.softwaretestingmaterial.com/api-testing/)
-- [Test Automation Patterns](https://www.testautomationpatterns.org/)
-
-### Example Repositories
-
-- [Playwright Example Tests](https://github.com/microsoft/playwright/tree/main/examples)
-- [API Automation Examples](https://github.com/topics/api-automation)
-
----
-
-## Author
-
-**Trung Tin Le**
-
-- GitHub: [@trungtinle301099-meo](https://github.com/trungtinle301099-meo)
-- Email: trungtinle301099@gmail.com
-
----
+* This is an API automation project, not a frontend application.
+* Docker configuration is not present in the current source.
+* Database configuration is not present in the current source.
+* GitHub Pages deployment is not present in the current workflow files.
+* `src/schemas/auth.schema.ts` is not present; token response schema currently lives in `src/schemas/booking.schema.ts`.
+* `src/helpers/retry.helper.ts`, `src/helpers/polling.helper.ts`, `src/helpers/allure.helper.ts`, and `src/helpers/test-cleanup.helper.ts` are not present in the current source.
+* `tests/api/get_booking/get-booking.api.spec.ts` is not present in the current source listing.
 
 ## License
 
-MIT License - See LICENSE file for details
+License information is not provided in the current source.
 
----
-
-## Support
-
-- 🐛 Found a bug? [Open an issue](https://github.com/trungtinle301099-meo/Booking_management-/issues)
-- 💡 Have a suggestion? [Create a discussion](https://github.com/trungtinle301099-meo/Booking_management-/discussions)
-- 📖 Need help? Check [existing issues](https://github.com/trungtinle301099-meo/Booking_management-/issues?q=is%3Aissue)
-
----
-
-**Last Updated:** June 2026  
-**Framework Version:** 1.0.0  
-**Status:** Production-Ready ✅
+```
+```
